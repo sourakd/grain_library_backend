@@ -1,7 +1,7 @@
 instance/*
-.gitignore
 .webassets-cache
 settings/keys.json
 note.py
 qodana.yaml
 .pb
+.idea
