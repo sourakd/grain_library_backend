@@ -1,0 +1,5 @@
+instance/*
+!instance/.gitignore
+.webassets-cache
+settings/keys.json
+!/note.py
