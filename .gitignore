@@ -4,3 +4,4 @@ instance/*
 settings/keys.json
 note.py
 qodana.yaml
+.pb
