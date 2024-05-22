@@ -1,5 +1,6 @@
 instance/*
-!instance/.gitignore
+.gitignore
 .webassets-cache
 settings/keys.json
-!/note.py
+note.py
+qodana.yaml

@@ -1,6 +1,6 @@
 import json
 
-with open('settings\keys.json', 'r') as file:
+with open('settings\\keys.json', 'r') as file:
     config_keys = json.load(file)
 
 
