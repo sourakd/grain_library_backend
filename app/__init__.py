@@ -38,4 +38,7 @@ def create_app(config_name):
     bcrypt.init_app(app)
     CORS(app)
 
+    from app.employee.views import employee
+
+    app.register_blueprint(employee)
     return app
