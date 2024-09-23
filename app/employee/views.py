@@ -5,6 +5,7 @@ from flask_cors import cross_origin
 from passlib.hash import pbkdf2_sha256
 from db_connection import database_connect_mongo
 from employee_helpers import EmployeeSchema
+from marshmallow.exceptions import ValidationError
 
 employee = Blueprint('employee', __name__)
 
@@ -30,15 +31,18 @@ class employee_registration(MethodView):
                         "password": password, "employee_name": employee_name, "email_id": email_id}
 
                 # Validate the data using the schema
-                result = emp_schema.load(data)
-                if result.errors:
-                    response = {"message": result.errors, "status": "val_error"}
+                try:
+                    validated_data = emp_schema.load(data)
+                except ValidationError as err:
+                    response = {"message": err.messages, "status": "val_error"}
                     return make_response(jsonify(response)), 200
-                else:
-                    validated_data = result.data
 
+                else:
                     # Hash the password
                     validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
+
+                    # Update the updated_at field
+                    validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                     # Insert the data into the database
                     db1.insert_one(validated_data)

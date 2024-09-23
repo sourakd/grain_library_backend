@@ -44,7 +44,7 @@ def database_connect_mongo():
     conn = connect_mongo_db(url, port)
     if conn:
         db_con = connect_database(db_name_mongo, conn)
-        if db_con:
+        if db_con is not None:
             try:
                 status = db_con.command("dbstats")
                 print("Database stats:", status)

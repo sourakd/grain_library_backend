@@ -4,7 +4,7 @@ import re
 
 class EmployeeSchema(Schema):
     status = fields.Str(required=True)
-    type_id = fields.Int(required=True)
+    type_id = fields.Str(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     password = fields.Str(required=True)
@@ -16,7 +16,8 @@ class EmployeeSchema(Schema):
         pachk = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"
         if not re.match(pachk, value):
             raise ValidationError(
-                "Please enter Minimum eight characters, at least one letter, one number and one special character for password field")
+                "Please enter Minimum eight characters, at least one letter, one number and one special character for "
+                "password field")
 
     @validates('employee_name')
     def validate_employee_name(self, value):
