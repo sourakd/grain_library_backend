@@ -24,3 +24,11 @@ class EmployeeSchema(Schema):
         nchk = "^[a-zA-Z\s]*\S$"
         if not re.match(nchk, value):
             raise ValidationError("Please enter alphabet only for name field")
+
+    @validates('email_id')
+    def validate_email_id(self, value):
+        from db_connection import database_connect_mongo
+        db = database_connect_mongo()
+        db1 = db["employee_registration"]
+        if db1.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+            raise ValidationError("Email already exists")
