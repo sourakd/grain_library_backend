@@ -103,11 +103,11 @@ class EmployeeLogin(MethodView):
                         {"$and": [{'email_id': re.compile("^" + re.escape(email_id) + "$", re.IGNORECASE)}],
                          "status": "active"})
 
-                    # Delete the previous token if exists(only singel token)
-                    db2.delete_one({"emp_id": str(user["_id"])})
+                    # Delete the previous token if exists(only single token)
+                    db2.delete_many({"e_id": str(user["_id"])})
 
                     e_token = jwt.encode(
-                        {'email_id': email_id, 'type_id': user.get('type_id'), '_id': str(user["_id"]),
+                        {'_id': str(user["_id"]),
                          'exp': datetime.now(pytz.utc) + dt.timedelta(days=7)},
                         current_app.config['SECRET_KEY'], algorithm="HS256")
 
@@ -116,7 +116,7 @@ class EmployeeLogin(MethodView):
                     user["token"] = e_token
 
                     # Save the token into the database
-                    db2.insert_one({"e_token": e_token, "emp_id": str(user["_id"]),
+                    db2.insert_one({"e_token": e_token, "e_id": str(user["_id"]),
                                     "created_at": datetime.now(pytz.utc),
                                     "local_time": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                     "expired_at": datetime.now(pytz.utc) + dt.timedelta(days=1)})
