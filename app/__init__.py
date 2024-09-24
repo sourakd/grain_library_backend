@@ -41,5 +41,4 @@ def create_app(config_name):
     from app.employee.views import employee
 
     app.register_blueprint(employee)
-
     return app

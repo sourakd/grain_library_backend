@@ -82,11 +82,14 @@ class EmployeeLogin(MethodView):
             db = database_connect_mongo()
             db1 = db["employee_registration"]
             db2 = db["employee_token"]
+            db2.create_index("expired_at", expireAfterSeconds=0)
             data = request.get_json()
             email_id = data["email_id"].lower()
             password = data["password"]
 
             if email_id and password:
+
+                data = {"email_id": email_id, "password": password}
 
                 # Validate the data using the schema
                 try:
@@ -100,19 +103,25 @@ class EmployeeLogin(MethodView):
                         {"$and": [{'email_id': re.compile("^" + re.escape(email_id) + "$", re.IGNORECASE)}],
                          "status": "active"})
 
+                    # Delete the previous token if exists(only singel token)
+                    db2.delete_one({"emp_id": str(user["_id"])})
+
                     e_token = jwt.encode(
                         {'email_id': email_id, 'type_id': user.get('type_id'), '_id': str(user["_id"]),
                          'exp': datetime.now(pytz.utc) + dt.timedelta(days=7)},
                         current_app.config['SECRET_KEY'], algorithm="HS256")
 
-                    db2.insert_one(e_token, {"_id": str(user["_id"])}, {"created_at": datetime.now(pytz.utc)},
-                                   {"expired_at": datetime.now(pytz.utc) + dt.timedelta(days=7)})
-
                     del user["password"]
                     user["_id"] = str(user["_id"])
                     user["token"] = e_token
 
-                    response = {"status": 'success', "data": user}
+                    # Save the token into the database
+                    db2.insert_one({"e_token": e_token, "emp_id": str(user["_id"]),
+                                    "created_at": datetime.now(pytz.utc),
+                                    "local_time": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                    "expired_at": datetime.now(pytz.utc) + dt.timedelta(days=1)})
+
+                    response = {"status": 'success', "data": user, "message": "Login successful"}
                     return make_response(jsonify(response)), 200
 
             else:
@@ -129,5 +138,5 @@ class EmployeeLogin(MethodView):
 emp_reg = EmployeeRegistration.as_view('emp_reg_view')
 emp_login = EmployeeLogin.as_view('emp_login_view')
 
-employee.add_url_rule('/employee/login', view_func=emp_login, methods=['POST'])
 employee.add_url_rule('/employee/registration', view_func=emp_reg, methods=['POST'])
+employee.add_url_rule('/employee/login', view_func=emp_login, methods=['POST'])
