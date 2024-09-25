@@ -100,6 +100,7 @@ class EmployeeLogin(MethodView):
                     return make_response(jsonify(response)), 200
 
                 else:
+                    # simpler version to do check {"email_id": {"$regex": "^" + value + "$", "$options": "i"}}{"email_id": {"$regex": "^" + value + "$", "$options": "i"}}
                     user = db1.find_one(
                         {"$and": [{'email_id': re.compile("^" + re.escape(email_id) + "$", re.IGNORECASE)}],
                          "status": "active"})
