@@ -7,7 +7,8 @@ from flask.views import MethodView
 from flask_cors import cross_origin
 from passlib.hash import pbkdf2_sha256
 from db_connection import database_connect_mongo
-from employee_schema_validation import EmployeeRegistrationSchema, employee_registration_schema, employee_login_schema
+from app.employee_validation import employee_registration_schema
+from app.general_validation import login_schema
 from marshmallow.exceptions import ValidationError
 import pytz
 
@@ -93,7 +94,7 @@ class EmployeeLogin(MethodView):
 
                 # Validate the data using the schema
                 try:
-                    employee_login_schema.load(data)
+                    login_schema.load(data)
                 except ValidationError as err:
                     response = {"message": err.messages, "status": "val_error"}
                     return make_response(jsonify(response)), 200
