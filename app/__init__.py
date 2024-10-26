@@ -14,7 +14,7 @@ def create_app(config_name):
     app.config['DEBUG'] = {
         'title': 'Grain Library',
         'description': "Learning Software App"
-                       "\n This is the registry API for Learning Software App. It allows you to access, manage, "
+                       "\n This is the registry API for Grain Library App. It allows you to access, manage, "
                        "and update API's.\n"
                        "\nAuthor: Sourav Kumar Dhar "
                        "\nCompany: Symagine Pvt. Ltd.\n",
@@ -38,7 +38,7 @@ def create_app(config_name):
     bcrypt.init_app(app)
     CORS(app)
 
-    from app.employee.views import employee
+    from app.employee_access.views import employee_access
 
-    app.register_blueprint(employee)
+    app.register_blueprint(employee_access)
     return app

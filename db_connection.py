@@ -1,7 +1,6 @@
 import pymongo
 import pymongo.errors
-from settings.configuration import DevelopmentConfig
-from settings.configuration import ProductionConfig
+from settings.configuration import ProductionConfig, DevelopmentConfig
 
 url_mongo_d = DevelopmentConfig.url_mongo
 url_mongo_p = ProductionConfig.url_mongo
@@ -9,6 +8,16 @@ port_mongo = DevelopmentConfig.port_mongo
 db_name_mongo = DevelopmentConfig.db_name_mongo
 db_username = ProductionConfig.db_username
 db_password = ProductionConfig.db_password
+
+apps = ["development", "production"]
+used_app = apps[0]
+
+
+def get_url():
+    if used_app == apps[1]:
+        return DevelopmentConfig.url_mongo
+    else:
+        return ProductionConfig.url_mongo
 
 
 def connect_mongo_db(url, port):
@@ -39,7 +48,7 @@ def connect_database(db_name, db_connect):
 
 
 def database_connect_mongo():
-    url = url_mongo_d if url_mongo_d else url_mongo_p
+    url = get_url()
     port = port_mongo
     conn = connect_mongo_db(url, port)
     if conn:

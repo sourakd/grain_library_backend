@@ -7,12 +7,11 @@ from flask.views import MethodView
 from flask_cors import cross_origin
 from passlib.hash import pbkdf2_sha256
 from db_connection import database_connect_mongo
-from app.employee_validation import employee_registration_schema
-from app.general_validation import login_schema
+from app.employee_validation import employee_registration_schema, employee_login_schema
 from marshmallow.exceptions import ValidationError
 import pytz
 
-employee = Blueprint('employee', __name__)
+employee_access = Blueprint('employee_access', __name__)
 
 
 class EmployeeRegistration(MethodView):
@@ -94,7 +93,7 @@ class EmployeeLogin(MethodView):
 
                 # Validate the data using the schema
                 try:
-                    login_schema.load(data)
+                    employee_login_schema.load(data)
                 except ValidationError as err:
                     response = {"message": err.messages, "status": "val_error"}
                     return make_response(jsonify(response)), 200
@@ -140,5 +139,5 @@ class EmployeeLogin(MethodView):
 emp_reg = EmployeeRegistration.as_view('emp_reg_view')
 emp_login = EmployeeLogin.as_view('emp_login_view')
 
-employee.add_url_rule('/employee/registration', view_func=emp_reg, methods=['POST'])
-employee.add_url_rule('/employee/login', view_func=emp_login, methods=['POST'])
+employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
+employee_access.add_url_rule('/employee_access/login', view_func=emp_login, methods=['POST'])
