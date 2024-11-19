@@ -126,7 +126,7 @@ class EmployeeLogin(MethodView):
                     return make_response(jsonify(response)), 200
 
             else:
-                response = {"status": 'val_error', "message": {"Details": ["Email and Password both are required"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Email and Password both are required!"]}}
                 return make_response(jsonify(response)), 200
 
         except Exception as e:
