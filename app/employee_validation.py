@@ -41,7 +41,7 @@ class EmployeeLoginSchema(Schema):
     password = fields.Str(required=True)
 
     @validates_schema
-    def validate_login(self, data):
+    def validate_login(self, data, **kwargs):
         db = database_connect_mongo()
         db1 = db["employee_registration"]
         if db1.count_documents({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2}) == 1:
