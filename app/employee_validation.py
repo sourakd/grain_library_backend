@@ -1,7 +1,8 @@
-from marshmallow import Schema, fields, validates, ValidationError, validates_schema
 import re
+
+from marshmallow import Schema, fields, validates, ValidationError, validates_schema
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
-from flask import request
+
 from db_connection import database_connect_mongo
 
 
@@ -44,9 +45,10 @@ class EmployeeLoginSchema(Schema):
     def validate_login(self, data, **kwargs):
         db = database_connect_mongo()
         db1 = db["employee_registration"]
-        if db1.count_documents({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2}) == 1:
+        employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
+        print(employee)
 
-            employee = db1.find_one({"email_id": {"$regex": re.escape(data['email_id']), "$options": "i"}})
+        if employee:
             if not pbkdf2_sha256.verify(data['password'], employee['password']):
                 raise ValidationError("Incorrect password")
 
