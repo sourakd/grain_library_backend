@@ -1,15 +1,17 @@
-from datetime import datetime
 import datetime as dt
 import re
-from flask import Blueprint, make_response, jsonify, request, current_app
+from datetime import datetime
+
 import jwt
+import pytz
+from flask import Blueprint, make_response, jsonify, request, current_app
 from flask.views import MethodView
 from flask_cors import cross_origin
-from passlib.hash import pbkdf2_sha256
-from db_connection import database_connect_mongo
-from app.employee_validation import employee_registration_schema, employee_login_schema
 from marshmallow.exceptions import ValidationError
-import pytz
+from passlib.hash import pbkdf2_sha256
+
+from app.employee_validation import employee_registration_schema, employee_login_schema
+from db_connection import database_connect_mongo
 
 employee_access = Blueprint('employee_access', __name__)
 
