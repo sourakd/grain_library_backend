@@ -49,6 +49,7 @@ class EmployeeLoginSchema(Schema):
             employee = db1.find_one({"email_id": {"$regex": re.escape(data['email_id']), "$options": "i"}})
             if not pbkdf2_sha256.verify(data['password'], employee['password']):
                 raise ValidationError("Incorrect password")
+
         else:
             raise ValidationError("Email does not exist")
 
