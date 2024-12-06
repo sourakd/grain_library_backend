@@ -2,6 +2,7 @@ import re
 
 from marshmallow import Schema, fields, validates, ValidationError, validates_schema
 from passlib.handlers.pbkdf2 import pbkdf2_sha256
+from werkzeug.datastructures import FileStorage as File
 
 from db_connection import database_connect_mongo
 
@@ -14,6 +15,7 @@ class EmployeeRegistrationSchema(Schema):
     password = fields.Str(required=True)
     employee_name = fields.Str(required=True)
     email_id = fields.Email(required=True)
+    profile_pic = fields.Raw(required=True)
 
     @validates('password')
     def validate_password(self, value):
@@ -35,6 +37,26 @@ class EmployeeRegistrationSchema(Schema):
         db1 = db["employee_registration"]
         if db1.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
             raise ValidationError("Email already exists")
+
+    @validates('profile_pic')
+    def validate_profile_pic(self, value):
+        print(value)
+        if not value:
+            raise ValidationError('Profile picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Profile picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Profile picture must be a JPEG, JPG or PNG file')
+
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+
+        if file_size > 500 * 1024:  # 500KB
+            raise ValidationError('Profile picture must be less than 500KB')
+
+        if file_size < 300 * 1024:  # 50KB
+            raise ValidationError('Profile picture must be greater than 300KB')
 
 
 class EmployeeLoginSchema(Schema):

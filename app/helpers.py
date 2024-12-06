@@ -1,8 +1,13 @@
+import datetime as dt
+import io
+import random
+import re
 from functools import wraps
+
 import jwt
 from flask import jsonify, request, current_app
+
 from db_connection import database_connect_mongo
-from datetime import datetime
 
 
 def Admin_Access(U):
@@ -40,3 +45,25 @@ def Admin_Access(U):
             return jsonify({"message": "Token is not active", "status": "val_error"}), 401
 
     return wrapper
+
+
+class S3Uploader:
+    def __init__(self, s3_config):
+        self.s3_config = s3_config
+        self.s3 = self.s3_config.get_s3_client()
+
+    def upload_file(self, file):
+        with io.BytesIO(file.read()) as f:
+            file_name = str(random.randint(1000, 10000)) + '_' + dt.datetime.now().strftime(
+                "%Y%m%d_%H%M%S_%f") + '.' + file.filename.split('.')[-1]
+            self.s3.upload_fileobj(f, self.s3_config.get_bucket_name(), file_name,
+                                   ExtraArgs={'ContentDisposition': 'inline', 'ContentType': file.content_type})
+            file_url = f"https://{self.s3_config.get_bucket_name()}.s3.{self.s3_config.get_region_name()}.amazonaws.com/{file_name}"
+            return file_url
+
+    def check_existing_file(self, file_url):
+        db = database_connect_mongo()
+        db1 = db["employee_registration"]
+        if db1.find_one({"$and": [{'file': re.compile("^" + re.escape(file_url) + "$", re.IGNORECASE)}]}):
+            return True
+        return False
