@@ -1,6 +1,7 @@
 import json
 
 import boto3
+import botocore
 
 with open('settings\\keys.json', 'r') as file:
     config_keys = json.load(file)
@@ -21,9 +22,16 @@ class S3Config:
         self.region_name = config_keys['region_name']
 
     def get_s3_client(self):
-        return boto3.client('s3', aws_access_key_id=self.access_key,
-                            aws_secret_access_key=self.secret_key,
-                            region_name=self.region_name)
+        try:
+            return boto3.client('s3', aws_access_key_id=self.access_key,
+                                aws_secret_access_key=self.secret_key,
+                                region_name=self.region_name)
+        except botocore.exceptions.NoCredentialsError:
+            print("Error: No AWS credentials found.")
+            return None
+        except Exception as e:
+            print(f"Error creating S3 client: {str(e)}")
+            return None
 
     def get_bucket_name(self):
         return self.bucket_name
@@ -33,16 +41,33 @@ class S3Config:
 
     def get_bucket_status(self):
         s3 = self.get_s3_client()
+        if s3 is None:
+            return "Error: Unable to create S3 client."
         try:
             s3.head_bucket(Bucket=self.bucket_name)
             return "Bucket exists and is accessible"
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return "Bucket not found."
+            else:
+                return f"Error accessing bucket: {str(e)}"
         except Exception as e:
             return f"Error accessing bucket: {str(e)}"
 
     def get_total_files(self):
         s3 = self.get_s3_client()
-        response = s3.list_objects_v2(Bucket=self.bucket_name)
-        return response['KeyCount']
+        if s3 is None:
+            return "Error: Unable to create S3 client."
+        try:
+            response = s3.list_objects_v2(Bucket=self.bucket_name)
+            return response['KeyCount']
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return "Bucket not found."
+            else:
+                return f"Error listing objects: {str(e)}"
+        except Exception as e:
+            return f"Error listing objects: {str(e)}"
 
     def connect_to_s3(self):
         print(f"Connecting to S3 bucket {self.bucket_name}...")
