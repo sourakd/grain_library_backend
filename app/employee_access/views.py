@@ -55,6 +55,7 @@ class EmployeeRegistration(MethodView):
                     validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                     s3_config = S3Config()
+                    bucket_status, total_files = s3_config.connect_to_s3()
                     s3_uploader = S3Uploader(s3_config)
                     file_url = s3_uploader.upload_file(profile_pic)
 

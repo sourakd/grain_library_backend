@@ -19,7 +19,6 @@ class S3Config:
         self.access_key = config_keys['aws_access_key_id']
         self.secret_key = config_keys['aws_secret_access_key']
         self.region_name = config_keys['region_name']
-        print(self.access_key)
 
     def get_s3_client(self):
         return boto3.client('s3', aws_access_key_id=self.access_key,
@@ -31,6 +30,27 @@ class S3Config:
 
     def get_region_name(self):
         return self.region_name
+
+    def get_bucket_status(self):
+        s3 = self.get_s3_client()
+        try:
+            s3.head_bucket(Bucket=self.bucket_name)
+            return "Bucket exists and is accessible"
+        except Exception as e:
+            return f"Error accessing bucket: {str(e)}"
+
+    def get_total_files(self):
+        s3 = self.get_s3_client()
+        response = s3.list_objects_v2(Bucket=self.bucket_name)
+        return response['KeyCount']
+
+    def connect_to_s3(self):
+        print(f"Connecting to S3 bucket {self.bucket_name}...")
+        bucket_status = self.get_bucket_status()
+        total_files = self.get_total_files()
+        print(f"S3 bucket status: {bucket_status}")
+        print(f"Total files in S3 bucket: {total_files}")
+        return bucket_status, total_files
 
 
 class DevelopmentConfig(Config):
