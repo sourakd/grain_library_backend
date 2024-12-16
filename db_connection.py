@@ -1,3 +1,5 @@
+import time
+
 import pymongo
 import pymongo.errors
 
@@ -15,25 +17,37 @@ used_app = apps[0]
 
 
 def get_url():
-    if used_app == apps[1]:
+    if used_app == apps[0]:
         return url_mongo_d
     else:
         return url_mongo_p
 
 
 def connect_mongo_db(url, port):
-    try:
-        if url == url_mongo_d and port == port_mongo:
-            return pymongo.MongoClient(url, port)
+    max_retries = 3
+    retry_delay = 1  # second
 
-        elif url == url_mongo_p and port == port_mongo:
-            return pymongo.MongoClient(url, port, username=db_username, password=db_password)
-        else:
-            return None
+    for attempt in range(max_retries):
+        try:
+            if url == url_mongo_d and port == port_mongo:
+                return pymongo.MongoClient(url, port, serverSelectionTimeoutMS=5000)
 
-    except pymongo.errors.ConnectionFailure as e:
-        print(f"Could not connect to MongoDB: {e}")
-        return None
+            elif url == url_mongo_p and port == port_mongo:
+                return pymongo.MongoClient(url, port, username=db_username, password=db_password,
+                                           serverSelectionTimeoutMS=5000)
+            else:
+                return None
+
+        except pymongo.errors.ConnectionFailure as e:
+            print(f"Could not connect to MongoDB (attempt {attempt + 1}/{max_retries}): {e}")
+            time.sleep(retry_delay)
+
+        except pymongo.errors.ServerSelectionTimeoutError as e:
+            print("Connection timeout error (attempt {attempt+1}/{max_retries}): {e}")
+            time.sleep(retry_delay)
+
+    print("Failed to connect to MongoDB after {} attempts".format(max_retries))
+    return None
 
 
 def connect_database(db_name, db_connect):

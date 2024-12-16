@@ -82,7 +82,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
     SECRET_KEY = config_keys['SECRET_KEY']
-    url_mongo = config_keys['MONGO_URL'][0]
+    url_mongo = config_keys['MONGO_URL_LOCAL']
     port_mongo = config_keys['PORT_MONGO']
     db_name_mongo = config_keys['DB_NAME_MONGO']
 
@@ -91,7 +91,7 @@ class ProductionConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
     SECRET_KEY = config_keys['SECRET_KEY']
-    url_mongo = config_keys['MONGO_URL'][1]
+    url_mongo = config_keys['MONGO_URL_REMOTE']
     port_mongo = config_keys['PORT_MONGO']
     db_name_mongo = config_keys['DB_NAME_MONGO']
     db_username = config_keys['DB_USERNAME']

@@ -40,7 +40,6 @@ class EmployeeRegistrationSchema(Schema):
 
     @validates('profile_pic')
     def validate_profile_pic(self, value):
-        print(value)
         if not value:
             raise ValidationError('Profile picture is required')
         if not isinstance(value, File):
