@@ -68,7 +68,6 @@ class EmployeeLoginSchema(Schema):
         db = database_connect_mongo()
         db1 = db["employee_registration"]
         employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
-        print(employee)
 
         if employee:
             if not pbkdf2_sha256.verify(data['password'], employee['password']):

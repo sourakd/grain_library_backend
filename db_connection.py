@@ -1,5 +1,6 @@
 import pymongo
 import pymongo.errors
+
 from settings.configuration import ProductionConfig, DevelopmentConfig
 
 url_mongo_d = DevelopmentConfig.url_mongo
@@ -15,9 +16,9 @@ used_app = apps[0]
 
 def get_url():
     if used_app == apps[1]:
-        return DevelopmentConfig.url_mongo
+        return url_mongo_d
     else:
-        return ProductionConfig.url_mongo
+        return url_mongo_p
 
 
 def connect_mongo_db(url, port):
@@ -61,3 +62,40 @@ def database_connect_mongo():
                 print(f"Error getting database stats: {e}")
         return db_con
     return None
+
+
+def start_and_check_mongo():
+    url = get_url()
+    port = port_mongo
+    try:
+        conn = pymongo.MongoClient(url, port)
+        conn.admin.command('ping')
+        print("MongoDB connection established and server is running")
+        return conn
+    except pymongo.errors.ConnectionFailure as e:
+        print("Failed to establish MongoDB connection or server is not running")
+        return None
+
+
+def stop_and_check_mongo_status(conn):
+    if conn:
+        try:
+            conn.close()
+            print("MongoDB connection closed")
+        except Exception as e:
+            print(f"Error closing MongoDB connection: {e}")
+    url = get_url()
+    try:
+        client = pymongo.MongoClient(url, port_mongo)
+        client.admin.command('ping')
+        print("MongoDB server is running")
+    except pymongo.errors.ConnectionFailure as e:
+        print("MongoDB server is not running")
+    finally:
+        client.close()
+
+
+conn = start_and_check_mongo()
+db = database_connect_mongo()
+# Perform operations on the database
+stop_and_check_mongo_status(conn)
