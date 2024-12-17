@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
-from flask_mongoengine import MongoEngine
 from flask_cors import CORS
+from flask_mongoengine import MongoEngine
+
 from settings.configuration import app_config
 
 mdb = MongoEngine()
@@ -39,6 +40,8 @@ def create_app(config_name):
     CORS(app)
 
     from app.employee_access.views import employee_access
+    from app.location.views import location_add
 
     app.register_blueprint(employee_access)
+    app.register_blueprint(location_add)
     return app
