@@ -35,7 +35,7 @@ class EmployeeRegistrationSchema(Schema):
     def validate_email_id(self, value):
         db = database_connect_mongo()
         db1 = db["employee_registration"]
-        if db1.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("Email already exists")
 
     @validates('profile_pic')

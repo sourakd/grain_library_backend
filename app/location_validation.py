@@ -20,9 +20,12 @@ class CountryRegistrationSchema(Schema):
     @validates('country')
     def validate_country(self, value):
         db = database_connect_mongo()
-        db1 = db["location_registration"]
-        if db1.count_documents({"country": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        db1 = db["location"]
+        db2 = db["employee_registration"]
+        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("Country already added")
+        if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
+            raise ValidationError("An employee with this country already exists")
 
         if not re.match(name_check, value):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
@@ -36,11 +39,11 @@ class CountryRegistrationSchema(Schema):
     @validates('email_id')
     def validate_email_id(self, value):
         db = database_connect_mongo()
-        db1 = db["location_registration"]
+        db1 = db["location"]
         db2 = db["employee_registration"]
-        if db1.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("Email already exists")
-        if db2.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("An employee with this email already exists")
 
 
@@ -54,9 +57,9 @@ class RegionRegistrationSchema(Schema):
     email_id = fields.Email(required=True)
 
     @validates_schema
-    def validate_region(self, data):
+    def validate_region(self, data, **kwargs):
         db = database_connect_mongo()
-        db1 = db["location_registration"]
+        db1 = db["location"]
         if db1.count_documents({"country": data['country'], "region": data['region']}):
             raise ValidationError("Region already added under this country")
 
@@ -66,11 +69,11 @@ class RegionRegistrationSchema(Schema):
     @validates('email_id')
     def validate_email_id(self, value):
         db = database_connect_mongo()
-        db1 = db["location_registration"]
+        db1 = db["location"]
         db2 = db["employee_registration"]
-        if db1.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("Email already exists")
-        if db2.count_documents({"email_id": {"$regex": re.escape(value), "$options": "i"}}) > 0:
+        if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("An employee with this email already exists")
 
     @validates('password')
@@ -94,7 +97,7 @@ class SubRegionRegistrationSchema(Schema):
     @validates_schema
     def validate_sub_region(self, data):
         db = database_connect_mongo()
-        db1 = db["location_registration"]
+        db1 = db["location"]
         if db1.count_documents(
                 {"country": data['country'], "region": data['region'], "sub_region": data['sub_region']}):
             raise ValidationError("Sub Region already added under this region")
@@ -108,6 +111,16 @@ class SubRegionRegistrationSchema(Schema):
             raise ValidationError(
                 "Please enter Minimum eight characters, at least one letter, one number and one special character for "
                 "password field")
+
+    @validates('email_id')
+    def validate_email_id(self, value):
+        db = database_connect_mongo()
+        db1 = db["location"]
+        db2 = db["employee_registration"]
+        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
+            raise ValidationError("Email already exists")
+        if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
+            raise ValidationError("An employee with this email already exists")
 
 
 country_registration_schema = CountryRegistrationSchema()
