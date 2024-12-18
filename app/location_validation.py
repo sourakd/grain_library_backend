@@ -124,7 +124,7 @@ class SubRegionRegistrationSchema(Schema):
             raise ValidationError("An employee with this email already exists")
 
 
-class EmployeeSchema(Schema):
+class LoginSchema(Schema):
     email_id = fields.Email(required=True)
     password = fields.Str(required=True)
 
@@ -145,4 +145,4 @@ class EmployeeSchema(Schema):
 country_registration_schema = CountryRegistrationSchema()
 region_registration_schema = RegionRegistrationSchema()
 sub_region_registration_schema = SubRegionRegistrationSchema()
-login_schema = EmployeeSchema()
+login_schema = LoginSchema()
