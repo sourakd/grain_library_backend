@@ -122,21 +122,21 @@ class AddRegion(MethodView):
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-                    db1.insert_one(validated_data)
+                        db1.insert_one(validated_data)
 
-                    # Remove the password from the data
-                    del validated_data["password"]
+                        # Remove the password from the data
+                        del validated_data["password"]
 
-                    # Extract the _id value
-                    validated_data["_id"] = str(validated_data["_id"])
+                        # Extract the _id value
+                        validated_data["_id"] = str(validated_data["_id"])
 
-                    # Create the response
-                    response = {"message": "Region added successfully", "status": "success",
-                                "data": validated_data}
-                    stop_and_check_mongo_status(conn)
+                        # Create the response
+                        response = {"message": "Region added successfully", "status": "success",
+                                    "data": validated_data}
+                        stop_and_check_mongo_status(conn)
 
-                    # Return the response
-                    return make_response(jsonify(response)), 200
+                        # Return the response
+                        return make_response(jsonify(response)), 200
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -302,12 +302,134 @@ class Login(MethodView):
             return make_response(jsonify(response)), 200
 
 
+class FetchCountry(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                find_country = db1.find({"status": "active"}, {"country": 1, "_id": 0})
+                total_country = db1.count_documents({"status": "active", "country": {"$exists": True}})
+
+                if total_country != 0:
+                    country_list = [i["country"] for i in find_country]
+                    response = {"status": 'success', "data": country_list, "total_country": total_country,
+                                "message": "All country fetched successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"country": ["Please add a country first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
+class FetchRegion(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                data = request.get_json()
+                country = data["country"]
+                region = db1.find({"country": country, "status": "active"}, {"region": 1, "_id": 0})
+                total_region = db1.count_documents(
+                    {"country": country, "status": "active", "region": {"$exists": True}})
+
+                if total_region != 0:
+                    region_list = [i["region"] for i in region]
+                    response = {"status": 'success', "data": region_list, "total_region": total_region,
+                                "message": "All region fetched successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"region": ["Please add a region first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
+class FetchSubRegion(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                data = request.get_json()
+                country = data["country"]
+                region = data["region"]
+                sub_region = db1.find({"country": country, "region": region, "status": "active"},
+                                      {"sub_region": 1, "_id": 0})
+                total_sub_region = db1.count_documents(
+                    {"country": country, "region": region, "status": "active", "sub_region": {"$exists": True}})
+
+                if total_sub_region != 0:
+                    sub_region_list = [i["sub_region"] for i in sub_region]
+                    response = {"status": 'success', "data": sub_region_list, "total_sub_region": total_sub_region,
+                                "message": "All sub-region fetched successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"sub_region": ["Please add a sub-region first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
 cnt_add = AddCountry.as_view('cnt_add_view')
 reg_add = AddRegion.as_view('reg_add_view')
 sub_reg_add = AddSubRegion.as_view('sub_reg_add_view')
 login_user = Login.as_view('login_view')
+fetch_country = FetchCountry.as_view('fetch_country')
+fetch_region = FetchRegion.as_view('fetch_region')
+fetch_sub_region = FetchSubRegion.as_view('fetch_sub_region')
 
-location_add.add_url_rule('/location/country_add', view_func=cnt_add, methods=['POST'])
-location_add.add_url_rule('/location/region_add', view_func=reg_add, methods=['POST'])
-location_add.add_url_rule('/location/sub_region_add', view_func=sub_reg_add, methods=['POST'])
+location_add.add_url_rule('/location/add_country', view_func=cnt_add, methods=['POST'])
+location_add.add_url_rule('/location/add_region', view_func=reg_add, methods=['POST'])
+location_add.add_url_rule('/location/add_sub_region', view_func=sub_reg_add, methods=['POST'])
 location_add.add_url_rule('/location/login', view_func=login_user, methods=['POST'])
+location_add.add_url_rule('/location/fetch_country', view_func=fetch_country, methods=['POST'])
+location_add.add_url_rule('/location/fetch_region', view_func=fetch_region, methods=['POST'])
+location_add.add_url_rule('/location/fetch_sub_region', view_func=fetch_sub_region, methods=['POST'])

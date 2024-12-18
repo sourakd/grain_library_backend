@@ -1,0 +1,244 @@
+import datetime as dt
+
+from flask import Blueprint, make_response, jsonify, request
+from flask.views import MethodView
+from flask_cors import cross_origin
+from marshmallow.exceptions import ValidationError
+
+from app.grain_validation import grain_registration_schema, grain_variant_registration_schema
+from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
+
+grain_add = Blueprint('grain_add', __name__)
+
+
+class AddGrain(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                data = request.get_json()
+                grain = data['grain']
+
+                if grain:
+                    # Validate the data using the schema
+                    data = {"status": "active",
+                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
+                            "grain": grain}
+
+                    # Validate the data using the schema
+                    try:
+                        validated_data = grain_registration_schema.load(data)
+                    except ValidationError as err:
+                        response = {"message": err.messages, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        # Update the updated_at field
+                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                        db1.insert_one(validated_data)
+
+                        # Extract the _id value
+                        validated_data["_id"] = str(validated_data["_id"])
+
+                        # Create the response
+                        response = {"message": "Grain added successfully", "status": "success",
+                                    "data": validated_data}
+                        stop_and_check_mongo_status(conn)
+
+                        # Return the response
+                        return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+    class AddGrainVariant(MethodView):
+        @cross_origin(supports_credentials=True)
+        def post(self):
+            try:
+                start_and_check_mongo()
+                db = database_connect_mongo()
+                if db is not None:
+                    db1 = db["grain"]
+                    data = request.get_json()
+                    grain = data['grain']
+                    grain_variant = data['grain_variant']
+
+                    if grain and grain_variant:
+                        # Validate the data using the schema
+                        data = {"status": "active",
+                                "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
+                                "grain": grain, "grain_variant": grain_variant}
+
+                        # Validate the data using the schema
+                        try:
+                            validated_data = grain_variant_registration_schema.load(data)
+                        except ValidationError as err:
+                            response = {"message": err.messages, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+
+                        else:
+                            # Update the updated_at field
+                            validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                            db1.insert_one(validated_data)
+
+                            # Extract the _id value
+                            validated_data["_id"] = str(validated_data["_id"])
+
+                            # Create the response
+                            response = {"message": "Grain variant added successfully", "status": "success",
+                                        "data": validated_data}
+                            stop_and_check_mongo_status(conn)
+
+                            # Return the response
+                            return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                else:
+                    response = {"status": 'val_error', "message": "Database connection failed"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                response = {"status": 'val_error', "message": f'{str(e)}'}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+
+# class FetchGrain(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is not None:
+#                 db1 = db["grain"]
+#                 data = db1.find({"status": "active"})
+#                 data = list(data)
+#                 for i in data:
+#                     i["_id"] = str(i["_id"])
+#                 response = {"status": "success", "data": data}
+#                 stop_and_check_mongo_status(conn)
+#                 return make_response(jsonify(response)), 200
+#             else:
+#                 response = {"status": 'val_error', "message": "Database connection failed"}
+#                 stop_and_check_mongo_status(conn)
+#                 return make_response(jsonify(response)), 200
+#
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc()
+#             response = {"status": 'val_error', "message": f'{str(e)}'}
+#             stop_and_check_mongo_status(conn)
+#             return make_response(jsonify(response)), 200
+
+
+class FetchGrain(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                find_grain = db1.find({"status": "active"}, {"grain": 1, "_id": 0})
+                total_grain = db1.count_documents({"status": "active", "grain": {"$exists": True}})
+
+                if total_grain != 0:
+                    grain_list = [i["grain"] for i in find_grain]
+                    response = {"status": 'success', "data": grain_list, "total_grain": total_grain,
+                                "message": "All country fetched successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
+class FetchGrainVariant(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                data = request.get_json()
+                grain = data["grain"]
+                find_grain_variant = db1.find({"grain": grain, "status": "active"}, {"grain_variant": 1, "_id": 0})
+                total_grain_variant = db1.count_documents({"grain": grain, "status": "active",
+                                                           "grain_variant": {"$exists": True}})
+
+                if total_grain_variant != 0:
+                    grain_variant_list = [i["grain"] for i in find_grain_variant]
+                    response = {"status": 'success', "data": grain_variant_list,
+                                "total_grain_variant": total_grain_variant,
+                                "message": "All country fetched successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
+grain_add_view = AddGrain.as_view('grain_add_view')
+grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
+grain_fetch_view = FetchGrain.as_view('grain_fetch_view')
+grain_variant_fetch_view = FetchGrainVariant.as_view('grain_fetch_variant_view')
+
+grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
+grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
+grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods=['POST'])
+grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])

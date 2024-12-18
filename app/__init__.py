@@ -41,7 +41,9 @@ def create_app(config_name):
 
     from app.employee_access.views import employee_access
     from app.location.views import location_add
+    from app.grain.views import grain_add
 
     app.register_blueprint(employee_access)
     app.register_blueprint(location_add)
+    app.register_blueprint(grain_add)
     return app
