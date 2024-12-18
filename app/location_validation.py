@@ -131,7 +131,7 @@ class LoginSchema(Schema):
     @validates_schema
     def validate_login(self, data, **kwargs):
         db = database_connect_mongo()
-        db1 = db["employee_registration"]
+        db1 = db["location"]
         employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
 
         if employee:
