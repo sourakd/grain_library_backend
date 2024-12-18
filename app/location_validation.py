@@ -22,11 +22,8 @@ class CountryRegistrationSchema(Schema):
     def validate_country(self, value):
         db = database_connect_mongo()
         db1 = db["location"]
-        db2 = db["employee_registration"]
-        if db1.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
+        if db1.count_documents({"country": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("Country already added")
-        if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
-            raise ValidationError("An employee with this country already exists")
 
         if not re.match(name_check, value):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
