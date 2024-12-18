@@ -10,7 +10,7 @@ from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
 from passlib.hash import pbkdf2_sha256
 
-from app.location_validation import country_registration_schema, region_registration_schema, \
+from app.location.location_validation import country_registration_schema, region_registration_schema, \
     sub_region_registration_schema, login_schema
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
 

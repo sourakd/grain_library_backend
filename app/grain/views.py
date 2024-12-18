@@ -5,7 +5,7 @@ from flask.views import MethodView
 from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
 
-from app.grain_validation import grain_registration_schema, grain_variant_registration_schema
+from app.grain.grain_validation import grain_registration_schema, grain_variant_registration_schema
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
 
 grain_add = Blueprint('grain_add', __name__)

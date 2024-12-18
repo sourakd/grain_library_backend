@@ -6,7 +6,7 @@ from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
 from passlib.hash import pbkdf2_sha256
 
-from app.employee_validation import employee_registration_schema
+from app.employee_access.employee_validation import employee_registration_schema
 from app.helpers import S3Uploader
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
 from settings.configuration import S3Config
