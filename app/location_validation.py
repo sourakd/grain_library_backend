@@ -134,12 +134,12 @@ class LoginSchema(Schema):
         db1 = db["location"]
         employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
 
-        if employee:
+        if employee is not None:
             if not pbkdf2_sha256.verify(data['password'], employee['password']):
                 raise ValidationError("Incorrect password")
 
         else:
-            raise ValidationError("Email does not exist")
+            raise ValidationError({"email_id": ["Email does not exist"]})
 
 
 country_registration_schema = CountryRegistrationSchema()
