@@ -1,7 +1,6 @@
 import re
 
-from marshmallow import Schema, fields, validates, ValidationError, validates_schema
-from passlib.handlers.pbkdf2 import pbkdf2_sha256
+from marshmallow import Schema, fields, validates, ValidationError
 from werkzeug.datastructures import FileStorage as File
 
 from db_connection import database_connect_mongo
@@ -58,23 +57,4 @@ class EmployeeRegistrationSchema(Schema):
             raise ValidationError('Profile picture must be greater than 300KB')
 
 
-class EmployeeLoginSchema(Schema):
-    email_id = fields.Email(required=True)
-    password = fields.Str(required=True)
-
-    @validates_schema
-    def validate_login(self, data, **kwargs):
-        db = database_connect_mongo()
-        db1 = db["employee_registration"]
-        employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
-
-        if employee:
-            if not pbkdf2_sha256.verify(data['password'], employee['password']):
-                raise ValidationError("Incorrect password")
-
-        else:
-            raise ValidationError("Email does not exist")
-
-
 employee_registration_schema = EmployeeRegistrationSchema()
-employee_login_schema = EmployeeLoginSchema()

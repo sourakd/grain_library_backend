@@ -1,6 +1,7 @@
 import re
 
 from marshmallow import Schema, fields, validates, ValidationError, validates_schema
+from passlib.handlers.pbkdf2 import pbkdf2_sha256
 
 from db_connection import database_connect_mongo
 
@@ -95,7 +96,7 @@ class SubRegionRegistrationSchema(Schema):
     email_id = fields.Email(required=True)
 
     @validates_schema
-    def validate_sub_region(self, data):
+    def validate_sub_region(self, data, **kwargs):
         db = database_connect_mongo()
         db1 = db["location"]
         if db1.count_documents(
@@ -123,6 +124,25 @@ class SubRegionRegistrationSchema(Schema):
             raise ValidationError("An employee with this email already exists")
 
 
+class EmployeeSchema(Schema):
+    email_id = fields.Email(required=True)
+    password = fields.Str(required=True)
+
+    @validates_schema
+    def validate_login(self, data, **kwargs):
+        db = database_connect_mongo()
+        db1 = db["employee_registration"]
+        employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
+
+        if employee:
+            if not pbkdf2_sha256.verify(data['password'], employee['password']):
+                raise ValidationError("Incorrect password")
+
+        else:
+            raise ValidationError("Email does not exist")
+
+
 country_registration_schema = CountryRegistrationSchema()
 region_registration_schema = RegionRegistrationSchema()
 sub_region_registration_schema = SubRegionRegistrationSchema()
+login_schema = EmployeeSchema()
