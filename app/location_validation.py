@@ -23,7 +23,7 @@ class CountryRegistrationSchema(Schema):
         db = database_connect_mongo()
         db1 = db["location"]
         if db1.count_documents({"country": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
-            raise ValidationError("Country already added")
+            raise ValidationError("This Country already added")
 
         if not re.match(name_check, value):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
@@ -59,7 +59,7 @@ class RegionRegistrationSchema(Schema):
         db = database_connect_mongo()
         db1 = db["location"]
         if db1.count_documents({"country": data['country'], "region": data['region']}):
-            raise ValidationError("Region already added under this country")
+            raise ValidationError({"region": ["This Region already added under this country"]})
 
         if not re.match(name_check, data['region']):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
@@ -98,7 +98,7 @@ class SubRegionRegistrationSchema(Schema):
         db1 = db["location"]
         if db1.count_documents(
                 {"country": data['country'], "region": data['region'], "sub_region": data['sub_region']}):
-            raise ValidationError("Sub Region already added under this region")
+            raise ValidationError({"sub_region": ["This Sub-region already added under this region"]})
 
         if not re.match(name_check, data['sub_region']):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
