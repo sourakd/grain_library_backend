@@ -81,6 +81,13 @@ class RegionRegistrationSchema(Schema):
                 "Please enter Minimum eight characters, at least one letter, one number and one special character for "
                 "password field")
 
+    @validates('country')
+    def validate_country(self, value):
+        db = database_connect_mongo()
+        db1 = db["location"]
+        if db1.count_documents({"country": {"$eq": value}}, collation={"locale": "en", "strength": 2}) == 0:
+            raise ValidationError("Country not found")
+
 
 class SubRegionRegistrationSchema(Schema):
     status = fields.Str(required=True)
@@ -119,6 +126,27 @@ class SubRegionRegistrationSchema(Schema):
             raise ValidationError("Email already exists")
         if db2.count_documents({"email_id": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
             raise ValidationError("An employee with this email already exists")
+
+    @validates('country')
+    def validate_country(self, value):
+        db = database_connect_mongo()
+        db1 = db["location"]
+        if db1.count_documents({"country": {"$eq": value}}, collation={"locale": "en", "strength": 2}) == 0:
+            raise ValidationError("Country not found")
+
+    @validates('region')
+    def validate_region(self, value):
+        db = database_connect_mongo()
+        db1 = db["location"]
+        if db1.count_documents({"region": {"$eq": value}}, collation={"locale": "en", "strength": 2}) == 0:
+            raise ValidationError("Region not found")
+
+    @validates_schema
+    def validate_region(self, data, **kwargs):
+        db = database_connect_mongo()
+        db1 = db["location"]
+        if db1.count_documents({"country": data['country'], "region": data['region']}) == 0:
+            raise ValidationError({"region": ["This region not added under this country"]})
 
 
 class LoginSchema(Schema):

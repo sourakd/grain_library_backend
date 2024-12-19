@@ -40,6 +40,9 @@ class AddGrain(MethodView):
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+                        # Add type field
+                        validated_data["type_id"] = "grain"
+
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
@@ -99,6 +102,9 @@ class AddGrain(MethodView):
                             # Update the updated_at field
                             validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+                            # Add type field
+                            validated_data["type_id"] = "grain_variant"
+
                             db1.insert_one(validated_data)
 
                             # Extract the _id value
@@ -129,6 +135,45 @@ class AddGrain(MethodView):
                 return make_response(jsonify(response)), 200
 
 
+class FetchGrain(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                find_grain = db1.find({"status": "active", "type_id": "grain"}, {"grain": 1})
+                find_grain_list = list(find_grain)
+                total_grain = db1.count_documents({"status": "active", "type_id": "grain"})
+
+                if total_grain != 0:
+                    for i in find_grain_list:
+                        i["_id"] = str(i["_id"])
+                    response = {"status": "success", "data": find_grain_list, "total_grain": total_grain,
+                                "message": "Grain "
+                                           "fetched "
+                                           "successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+                else:
+                    response = {"status": 'val_error', "message": {"Grain": ["Please add a grain first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 200
+
+
 # class FetchGrain(MethodView):
 #     @cross_origin(supports_credentials=True)
 #     def post(self):
@@ -137,13 +182,21 @@ class AddGrain(MethodView):
 #             db = database_connect_mongo()
 #             if db is not None:
 #                 db1 = db["grain"]
-#                 data = db1.find({"status": "active"})
-#                 data = list(data)
-#                 for i in data:
-#                     i["_id"] = str(i["_id"])
-#                 response = {"status": "success", "data": data}
-#                 stop_and_check_mongo_status(conn)
-#                 return make_response(jsonify(response)), 200
+#                 find_grain = db1.find({"status": "active"}, {"grain": 1, "_id": 0})
+#                 total_grain = db1.count_documents({"status": "active", "grain": {"$exists": True}})
+#
+#                 if total_grain != 0:
+#                     grain_list = [i["grain"] for i in find_grain]
+#                     response = {"status": 'success', "data": grain_list, "total_grain": total_grain,
+#                                 "message": "All country fetched successfully"}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 200
+#
+#                 else:
+#                     response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 200
+#
 #             else:
 #                 response = {"status": 'val_error', "message": "Database connection failed"}
 #                 stop_and_check_mongo_status(conn)
@@ -157,42 +210,6 @@ class AddGrain(MethodView):
 #             return make_response(jsonify(response)), 200
 
 
-class FetchGrain(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["grain"]
-                find_grain = db1.find({"status": "active"}, {"grain": 1, "_id": 0})
-                total_grain = db1.count_documents({"status": "active", "grain": {"$exists": True}})
-
-                if total_grain != 0:
-                    grain_list = [i["grain"] for i in find_grain]
-                    response = {"status": 'success', "data": grain_list, "total_grain": total_grain,
-                                "message": "All country fetched successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
-
-                else:
-                    response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
-
-            else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
-
-
 class FetchGrainVariant(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -202,21 +219,33 @@ class FetchGrainVariant(MethodView):
             if db is not None:
                 db1 = db["grain"]
                 data = request.get_json()
-                grain = data["grain"]
-                find_grain_variant = db1.find({"grain": grain, "status": "active"}, {"grain_variant": 1, "_id": 0})
-                total_grain_variant = db1.count_documents({"grain": grain, "status": "active",
-                                                           "grain_variant": {"$exists": True}})
+                grain = data["grain"].lower()
 
-                if total_grain_variant != 0:
-                    grain_variant_list = [i["grain"] for i in find_grain_variant]
-                    response = {"status": 'success', "data": grain_variant_list,
-                                "total_grain_variant": total_grain_variant,
-                                "message": "All country fetched successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                if grain:
+                    find_grain_variant = db1.find({"status": "active", "type_id": "grain_variant", "grain": grain},
+                                                  {"grain_variant": 1})
+                    find_grain_variant_list = list(find_grain_variant)
+                    total_grain_variant = db1.count_documents(
+                        {"status": "active", "type_id": "grain_variant", "grain": grain})
+
+                    if total_grain_variant != 0:
+                        for i in find_grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_grain_variant_list,
+                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
+                                                                                           "fetched "
+                                                                                           "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
+                                                                                         "first"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
 
                 else:
-                    response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 200
 

@@ -52,6 +52,9 @@ class AddCountry(MethodView):
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+                        # Add type
+                        validated_data["type_id"] = "country"
+
                     db1.insert_one(validated_data)
 
                     # Remove the password from the data
@@ -121,6 +124,9 @@ class AddRegion(MethodView):
 
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                        # Add type
+                        validated_data["type_id"] = "region"
 
                         db1.insert_one(validated_data)
 
@@ -193,6 +199,9 @@ class AddSubRegion(MethodView):
 
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                        # Add type
+                        validated_data["type_id"] = "sub_region"
 
                     db1.insert_one(validated_data)
 
@@ -310,16 +319,19 @@ class FetchCountry(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["location"]
-                find_country = db1.find({"status": "active"}, {"country": 1, "_id": 0})
-                total_country = db1.count_documents({"status": "active", "country": {"$exists": True}})
+                find_country = db1.find({"status": "active", "type_id": "country"}, {"country": 1})
+                find_country_list = list(find_country)
+                total_country = db1.count_documents({"status": "active", "type_id": "country"})
 
                 if total_country != 0:
-                    country_list = [i["country"] for i in find_country]
-                    response = {"status": 'success', "data": country_list, "total_country": total_country,
-                                "message": "All country fetched successfully"}
+                    for i in find_country_list:
+                        i["_id"] = str(i["_id"])
+                    response = {"status": "success", "data": find_country_list, "total_country": total_country,
+                                "message": "Country "
+                                           "fetched "
+                                           "successfully"}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 200
-
                 else:
                     response = {"status": 'val_error', "message": {"country": ["Please add a country first"]}}
                     stop_and_check_mongo_status(conn)
@@ -348,19 +360,31 @@ class FetchRegion(MethodView):
                 db1 = db["location"]
                 data = request.get_json()
                 country = data["country"]
-                region = db1.find({"country": country, "status": "active"}, {"region": 1, "_id": 0})
-                total_region = db1.count_documents(
-                    {"country": country, "status": "active", "region": {"$exists": True}})
 
-                if total_region != 0:
-                    region_list = [i["region"] for i in region]
-                    response = {"status": 'success', "data": region_list, "total_region": total_region,
-                                "message": "All region fetched successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                if country:
+                    find_region = db1.find({"status": "active", "type_id": "region", "country": country},
+                                           {"region": 1})
+                    find_region_list = list(find_region)
+                    total_region = db1.count_documents(
+                        {"status": "active", "type_id": "region", "country": country})
+
+                    if total_region != 0:
+                        for i in find_region_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_region_list,
+                                    "total_region": total_region, "message": "all region "
+                                                                             "fetched "
+                                                                             "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"region": ["Please check the country name"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
 
                 else:
-                    response = {"status": 'val_error', "message": {"region": ["Please add a region first"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 200
 
@@ -388,20 +412,32 @@ class FetchSubRegion(MethodView):
                 data = request.get_json()
                 country = data["country"]
                 region = data["region"]
-                sub_region = db1.find({"country": country, "region": region, "status": "active"},
-                                      {"sub_region": 1, "_id": 0})
-                total_sub_region = db1.count_documents(
-                    {"country": country, "region": region, "status": "active", "sub_region": {"$exists": True}})
+                if country and region:
+                    find_sub_region = db1.find(
+                        {"status": "active", "type_id": "sub_region", "country": country, "region": region},
+                        {"region": 1})
+                    find_sub_region_list = list(find_sub_region)
+                    total_sub_region = db1.count_documents(
+                        {"status": "active", "type_id": "sub_region", "country": country, "region": region})
 
-                if total_sub_region != 0:
-                    sub_region_list = [i["sub_region"] for i in sub_region]
-                    response = {"status": 'success', "data": sub_region_list, "total_sub_region": total_sub_region,
-                                "message": "All sub-region fetched successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    if total_sub_region != 0:
+                        for i in find_sub_region_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_sub_region_list,
+                                    "total_sub_region": total_sub_region, "message": "all sub-region "
+                                                                                     "fetched "
+                                                                                     "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error',
+                                    "message": {"region": ["Please check the country and region"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
 
                 else:
-                    response = {"status": 'val_error', "message": {"sub_region": ["Please add a sub-region first"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 200
 
