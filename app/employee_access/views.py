@@ -44,7 +44,7 @@ class EmployeeRegistration(MethodView):
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         # Hash the password
@@ -61,7 +61,7 @@ class EmployeeRegistration(MethodView):
                         if s3_uploader.check_existing_file(file_url):
                             response = {"message": "File already exist", "status": "val_error"}
                             stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
+                            return make_response(jsonify(response)), 400
 
                         # Insert the data into the database
                         validated_data["profile_pic"] = file_url
@@ -84,19 +84,19 @@ class EmployeeRegistration(MethodView):
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 emp_reg = EmployeeRegistration.as_view('emp_reg_view')

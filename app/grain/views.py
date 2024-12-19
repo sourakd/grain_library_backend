@@ -322,13 +322,13 @@ class GStatusChange(MethodView):
                     if current_status["status"] == g_status:
                         response = {"status": 'val_error', "message": {"Details": [f"Grain is already {g_status}"]}}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         db1.update_one({"_id": ObjectId(gs_id), "type_id": type_id}, {"$set": {"status": g_status}})
                         response = {"status": "success", "message": f"Grain {g_status} successfully"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
+                        return make_response(jsonify(response)), 200
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)

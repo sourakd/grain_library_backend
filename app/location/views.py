@@ -43,7 +43,7 @@ class AddCountry(MethodView):
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         # Hash the password
@@ -74,19 +74,19 @@ class AddCountry(MethodView):
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class AddRegion(MethodView):
@@ -116,7 +116,7 @@ class AddRegion(MethodView):
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         # Hash the password
@@ -147,19 +147,19 @@ class AddRegion(MethodView):
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class AddSubRegion(MethodView):
@@ -191,7 +191,7 @@ class AddSubRegion(MethodView):
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         # Hash the password
@@ -222,19 +222,19 @@ class AddSubRegion(MethodView):
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class Login(MethodView):
@@ -261,7 +261,7 @@ class Login(MethodView):
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                     else:
                         # simpler version to do check {"email_id": {"$regex": "^" + value + "$", "$options": "i"}}{
@@ -296,19 +296,19 @@ class Login(MethodView):
                     response = {"status": 'val_error',
                                 "message": {"Details": ["Email and Password both are required!"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class FetchCountry(MethodView):
@@ -335,19 +335,19 @@ class FetchCountry(MethodView):
                 else:
                     response = {"status": 'val_error', "message": {"country": ["Please add a country first"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class FetchRegion(MethodView):
@@ -381,24 +381,24 @@ class FetchRegion(MethodView):
                     else:
                         response = {"status": 'val_error', "message": {"region": ["Please check the country name"]}}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 class FetchSubRegion(MethodView):
@@ -434,24 +434,24 @@ class FetchSubRegion(MethodView):
                         response = {"status": 'val_error',
                                     "message": {"region": ["Please check the country and region"]}}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": "Database connection failed"}
                 stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 200
+                return make_response(jsonify(response)), 400
 
         except Exception as e:
             import traceback
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 400
 
 
 cnt_add = AddCountry.as_view('cnt_add_view')
