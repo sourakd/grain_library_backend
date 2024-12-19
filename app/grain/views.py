@@ -136,7 +136,7 @@ class AddGrain(MethodView):
                 return make_response(jsonify(response)), 400
 
 
-class FetchGrain(MethodView):
+class FetchAllGrain(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
@@ -144,7 +144,7 @@ class FetchGrain(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["grain"]
-                find_grain = db1.find({"status": "active", "type_id": "grain"}, {"grain": 1})
+                find_grain = db1.find({"status": {"$ne": "delete"}, "type_id": "grain"}, {"grain": 1}).sort("status", 1)
                 find_grain_list = list(find_grain)
                 total_grain = db1.count_documents({"status": "active", "type_id": "grain"})
 
@@ -211,7 +211,7 @@ class FetchGrain(MethodView):
 #             return make_response(jsonify(response)), 200
 
 
-class FetchGrainVariant(MethodView):
+class FetchAllGrainVariant(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
@@ -223,8 +223,9 @@ class FetchGrainVariant(MethodView):
                 grain = data["grain"].lower()
 
                 if grain:
-                    find_grain_variant = db1.find({"status": "active", "type_id": "grain_variant", "grain": grain},
-                                                  {"grain_variant": 1})
+                    find_grain_variant = db1.find(
+                        {"status": {"$ne": "delete"}, "type_id": "grain_variant", "grain": grain},
+                        {"grain_variant": 1}).sort("status", 1)
                     find_grain_variant_list = list(find_grain_variant)
                     total_grain_variant = db1.count_documents(
                         {"status": "active", "type_id": "grain_variant", "grain": grain})
@@ -277,7 +278,7 @@ class FetchGDetails(MethodView):
 
                 if g_id and type_id:
                     find_details = db1.find_one(
-                        {"_id": ObjectId(g_id), "status": {"$in": ["active", "inactive"]}, "type_id": type_id})
+                        {"_id": ObjectId(g_id), "status": {"$ne": "delete"}, "type_id": type_id})
 
                     if find_details:
                         find_details["_id"] = str(find_details["_id"])
@@ -318,17 +319,38 @@ class GStatusChange(MethodView):
                 type_id = data["type_id"]
 
                 if g_status and gs_id and type_id:
-                    current_status = db1.find_one({"_id": ObjectId(gs_id), "type_id": type_id}, {"status": 1})
+
+                    current_status = db1.find_one({"_id": ObjectId(gs_id), "type_id": type_id, }, {"status": 1})
+
+                    if current_status is None:
+                        response = {"status": 'val_error', "message": {"DB": ["Data not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if current_status["status"] == "delete":
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     if current_status["status"] == g_status:
                         response = {"status": 'val_error', "message": {"Details": [f"Grain is already {g_status}"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
                     else:
-                        db1.update_one({"_id": ObjectId(gs_id), "type_id": type_id}, {"$set": {"status": g_status}})
-                        response = {"status": "success", "message": f"Grain {g_status} successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        update_status = db1.update_one(
+                            {"_id": ObjectId(gs_id), "type_id": type_id, "status": {"$ne": "delete"}},
+                            {"$set": {"status": g_status,
+                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+
+                        if update_status.matched_count == 1 and update_status.modified_count == 1:
+                            response = {"status": "success", "message": f"Grain {g_status} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": "error", "message": "Grain not updated"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
@@ -349,14 +371,14 @@ class GStatusChange(MethodView):
 
 grain_add_view = AddGrain.as_view('grain_add_view')
 grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
-grain_fetch_view = FetchGrain.as_view('grain_fetch_view')
-grain_variant_fetch_view = FetchGrainVariant.as_view('grain_fetch_variant_view')
-g_status = GStatusChange.as_view('g_status')
+grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
+grain_variant_fetch_view = FetchAllGrainVariant.as_view('grain_fetch_variant_view')
+g_status_change = GStatusChange.as_view('g_status')
 g_details = FetchGDetails.as_view('g_details')
 
 grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
 grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
 grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])
-grain_add.add_url_rule('/grain/g_status', view_func=g_status, methods=['POST'])
+grain_add.add_url_rule('/grain/g_status_change', view_func=g_status_change, methods=['POST'])
 grain_add.add_url_rule('/grain/g_details', view_func=g_details, methods=['POST'])
