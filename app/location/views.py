@@ -35,7 +35,7 @@ class AddCountry(MethodView):
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "location": location, "email_id": email_id}
+                            "password": password, "location": location, "email_id": email_id, "assigned": "false"}
 
                     # Validate the data using the schema
                     try:
@@ -108,7 +108,8 @@ class AddRegion(MethodView):
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "country": country, "email_id": email_id, "location": location}
+                            "password": password, "country": country, "email_id": email_id, "location": location,
+                            "assigned": "false"}
 
                     # Validate the data using the schema
                     try:
