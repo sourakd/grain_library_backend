@@ -4,4 +4,4 @@ settings/keys.json
 note.py
 qodana.yaml
 .pb
-.idea
+.idea.qodo

@@ -1,9 +1,12 @@
 import re
 
-from marshmallow import Schema, fields, validates, ValidationError
+from marshmallow import Schema, fields, validates, ValidationError, validates_schema
 from werkzeug.datastructures import FileStorage as File
 
 from db_connection import database_connect_mongo
+
+name_check = re.compile(r"^[a-zA-Z\s]*\S$")
+phone_pattern = re.compile(r'^\d{10}$')
 
 
 class EmployeeRegistrationSchema(Schema):
@@ -11,24 +14,24 @@ class EmployeeRegistrationSchema(Schema):
     type_id = fields.Str(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
-    password = fields.Str(required=True)
     employee_name = fields.Str(required=True)
     email_id = fields.Email(required=True)
     profile_pic = fields.Raw(required=True)
-
-    @validates('password')
-    def validate_password(self, value):
-        pachk = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$"
-        if not re.match(pachk, value):
-            raise ValidationError(
-                "Please enter Minimum eight characters, at least one letter, one number and one special character for "
-                "password field")
+    phone_number = fields.Str(required=True)
+    address = fields.Str(required=True)
+    id_proof = fields.Str(required=True)
+    id_no = fields.Str(required=True)
+    assigned = fields.Str(required=True)
 
     @validates('employee_name')
     def validate_employee_name(self, value):
-        nchk = "^[a-zA-Z\s]*\S$"
-        if not re.match(nchk, value):
+        if not re.match(name_check, value):
             raise ValidationError("Please enter alphabet only for name field")
+
+    @validates('type_id')
+    def validate_type_id(self, value):
+        if value not in ['admin', 'sub_admin', 'editor']:
+            raise ValidationError("Please select a valid type ID. It should be either 'admin', 'sub_admin' or 'editor'")
 
     @validates('email_id')
     def validate_email_id(self, value):
@@ -55,6 +58,28 @@ class EmployeeRegistrationSchema(Schema):
 
         if file_size < 250 * 1024:  # 50KB
             raise ValidationError('Profile picture must be greater than 300KB')
+
+    @validates('id_proof')
+    def validate_id_proof(self, value):
+        if value not in ['aadhar', 'voter']:
+            raise ValidationError("Please select a valid ID proof type. It should be either 'Aadhar' or 'Voter'.")
+
+    @validates_schema()
+    def validate_id_no(self, data, **kwargs):
+        print("Please", data)
+        if data["id_proof"] == "aadhar":
+            aadhar_pattern = re.compile(r'^\d{12}$')
+            if not aadhar_pattern.match(data["id_no"]):
+                raise ValidationError({"id_no": ["Please enter a valid Aadhar card number (12 characters)"]})
+        elif data["id_proof"] == "voter":
+            voter_pattern = re.compile(r'^[A-Z]{3}\d{7}$')
+            if not voter_pattern.match(data["id_no"]):
+                raise ValidationError({"id_no": ["Please enter a valid Voter ID number (10 characters)"]})
+
+    @validates('phone_number')
+    def validate_phone_number(self, value):
+        if not phone_pattern.match(value):
+            raise ValidationError("Please enter a valid phone number (10 digits).")
 
 
 employee_registration_schema = EmployeeRegistrationSchema()

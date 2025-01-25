@@ -11,7 +11,7 @@ from marshmallow.exceptions import ValidationError
 from passlib.hash import pbkdf2_sha256
 
 from app.location.location_validation import country_registration_schema, region_registration_schema, \
-    sub_region_registration_schema, login_schema
+    login_schema
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
 
 location_add = Blueprint('location_add', __name__)
@@ -26,16 +26,16 @@ class AddCountry(MethodView):
             if db is not None:
                 db1 = db["location"]
                 data = request.get_json()
-                country = data["country"]
+                location = data["location"]
                 email_id = data["email_id"].lower()
                 password = data["password"]
 
-                if country and email_id and password:
+                if location and email_id and password:
 
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "country": country, "email_id": email_id}
+                            "password": password, "location": location, "email_id": email_id}
 
                     # Validate the data using the schema
                     try:
@@ -99,16 +99,16 @@ class AddRegion(MethodView):
                 db1 = db["location"]
                 data = request.get_json()
                 country = data["country"]
-                region = data["region"]
+                location = data["location"]
                 email_id = data["email_id"].lower()
                 password = data["password"]
 
-                if country and email_id and password and region:
+                if country and email_id and password and location:
 
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "country": country, "email_id": email_id, "region": region}
+                            "password": password, "country": country, "email_id": email_id, "location": location}
 
                     # Validate the data using the schema
                     try:
@@ -143,81 +143,6 @@ class AddRegion(MethodView):
 
                         # Return the response
                         return make_response(jsonify(response)), 200
-
-                else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
-class AddSubRegion(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["location"]
-                data = request.get_json()
-                country = data["country"]
-                region = data["region"]
-                sub_region = data["sub_region"]
-                email_id = data["email_id"].lower()
-                password = data["password"]
-
-                if country and email_id and password and region and sub_region:
-
-                    # Validate the data using the schema
-                    data = {"status": "active",
-                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "country": country, "email_id": email_id, "region": region,
-                            "sub_region": sub_region}
-
-                    # Validate the data using the schema
-                    try:
-                        validated_data = sub_region_registration_schema.load(data)
-                    except ValidationError as err:
-                        response = {"message": err.messages, "status": "val_error"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                    else:
-                        # Hash the password
-                        validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
-
-                        # Update the updated_at field
-                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-                        # Add type
-                        validated_data["type_id"] = "sub_region"
-
-                    db1.insert_one(validated_data)
-
-                    # Remove the password from the data
-                    del validated_data["password"]
-
-                    # Extract the _id value
-                    validated_data["_id"] = str(validated_data["_id"])
-
-                    # Create the response
-                    response = {"message": "Sub-region added successfully", "status": "success",
-                                "data": validated_data}
-                    stop_and_check_mongo_status(conn)
-
-                    # Return the response
-                    return make_response(jsonify(response)), 200
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -401,71 +326,14 @@ class FetchRegion(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class FetchSubRegion(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["location"]
-                data = request.get_json()
-                country = data["country"]
-                region = data["region"]
-                if country and region:
-                    find_sub_region = db1.find(
-                        {"status": "active", "type_id": "sub_region", "country": country, "region": region},
-                        {"region": 1})
-                    find_sub_region_list = list(find_sub_region)
-                    total_sub_region = db1.count_documents(
-                        {"status": "active", "type_id": "sub_region", "country": country, "region": region})
-
-                    if total_sub_region != 0:
-                        for i in find_sub_region_list:
-                            i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_sub_region_list,
-                                    "total_sub_region": total_sub_region, "message": "all sub-region "
-                                                                                     "fetched "
-                                                                                     "successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-
-                    else:
-                        response = {"status": 'val_error',
-                                    "message": {"region": ["Please check the country and region"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
 cnt_add = AddCountry.as_view('cnt_add_view')
 reg_add = AddRegion.as_view('reg_add_view')
-sub_reg_add = AddSubRegion.as_view('sub_reg_add_view')
 login_user = Login.as_view('login_view')
 fetch_country = FetchCountry.as_view('fetch_country')
 fetch_region = FetchRegion.as_view('fetch_region')
-fetch_sub_region = FetchSubRegion.as_view('fetch_sub_region')
 
 location_add.add_url_rule('/location/add_country', view_func=cnt_add, methods=['POST'])
 location_add.add_url_rule('/location/add_region', view_func=reg_add, methods=['POST'])
-location_add.add_url_rule('/location/add_sub_region', view_func=sub_reg_add, methods=['POST'])
 location_add.add_url_rule('/location/login', view_func=login_user, methods=['POST'])
 location_add.add_url_rule('/location/fetch_country', view_func=fetch_country, methods=['POST'])
 location_add.add_url_rule('/location/fetch_region', view_func=fetch_region, methods=['POST'])
-location_add.add_url_rule('/location/fetch_sub_region', view_func=fetch_sub_region, methods=['POST'])

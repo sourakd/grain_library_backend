@@ -5,7 +5,6 @@ from flask import Blueprint, make_response, jsonify, request
 from flask.views import MethodView
 from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
-from passlib.hash import pbkdf2_sha256
 
 from app.employee_access.employee_validation import employee_registration_schema
 from app.helpers import S3Uploader
@@ -24,19 +23,24 @@ class EmployeeRegistration(MethodView):
             if db is not None:
                 db1 = db["employee_registration"]
                 data = dict(request.form)
-                employee_name = data["employee_name"]
+                employee_name = data["employee_name"].lower()
                 email_id = data["email_id"].lower()
-                password = data["password"]
-                type_id = data["type_id"]
+                type_id = data["type_id"].lower()
+                address = data["address"].lower()
+                id_proof = data["id_proof"].lower()
+                phone_number = data["phone_number"]
+                id_no = data["id_no"]
                 profile_pic = request.files.get("profile_pic")
 
-                if employee_name and email_id and password and type_id and profile_pic:
+                if employee_name and email_id and phone_number and type_id and profile_pic and address and id_proof and id_no:
 
                     # emp_schema = EmployeeRegistrationSchema()
 
                     data = {"status": "active", "type_id": type_id,
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "employee_name": employee_name, "email_id": email_id,
+                            "employee_name": employee_name, "email_id": email_id,
+                            "address": address, "id_proof": id_proof, "id_no": id_no,
+                            "phone_number": phone_number, "assigned": "false",
                             "profile_pic": profile_pic}
 
                     # Validate the data using the schema
@@ -48,9 +52,6 @@ class EmployeeRegistration(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Hash the password
-                        validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
-
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -67,9 +68,6 @@ class EmployeeRegistration(MethodView):
                         # Insert the data into the database
                         validated_data["profile_pic"] = file_url
                         db1.insert_one(validated_data)
-
-                        # Remove the password from the data
-                        del validated_data["password"]
 
                         # Extract the _id value
                         validated_data["_id"] = str(validated_data["_id"])
@@ -110,10 +108,11 @@ class AllEmployee(MethodView):
                 db1 = db["employee_registration"]
                 data = request.get_json()
                 type_id = data["type_id"]
+                assigned = data["assigned"]
 
-                if type_id:
-                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id}, {"password": 0}).sort(
-                        "status", 1)
+                if type_id and assigned is None or assigned == "":
+                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id},
+                                             {"password": 0}).sort("status", 1)
                     find_employee_list = list(find_employee)
                     total_employee = db1.count_documents({"status": {"$ne": "delete"}, "type_id": type_id})
 
@@ -130,6 +129,33 @@ class AllEmployee(MethodView):
                         response = {"status": 'val_error', "message": {"Employee": ["Please add an employee first"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
+
+                if type_id and assigned:
+                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "assigned": assigned},
+                                             {"password": 0}).sort(
+                        "status", 1)
+                    find_employee_list = list(find_employee)
+                    total_employee = db1.count_documents(
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "assigned": assigned})
+
+                    if total_employee != 0:
+                        for i in find_employee_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_employee_list, "total_employee": total_employee,
+                                    "message": "Employee "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"Employee": ["Please add an employee first"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter type ID"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
 
             else:
                 response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
@@ -255,12 +281,89 @@ class EmployeeStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
+class EmployeeAssign(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["employee_registration"]
+                db2 = db["location"]
+                data = request.get_json()
+                employee_id = data["emp_id"]
+                location_id = data["loc_id"]
+
+                if employee_id and location_id:
+
+                    employee = db1.find_one({"_id": ObjectId(employee_id)})
+                    employee_name = employee.get("employee_name", None)
+                    employee_assigned = employee.get("assigned", None)
+
+                    location = db2.find_one({"_id": ObjectId(location_id)})
+                    location_name = location.get("country", None)
+                    location_assigned = location.get("assigned", None)
+
+                    if employee and location:
+
+                        if employee_assigned == "true":
+                            location = employee["location"]
+                            response = {"status": 'val_error', "message": {"Employee": [f"{employee_name} is already "
+                                                                                        f"assigned to {location}"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if location_assigned == "true":
+                            employee = location["employee"]
+                            response = {"status": 'val_error', "message": {"Country": [f"{location_name} is already "
+                                                                                       f"assigned with {employee}"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        else:
+                            db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {"location": location_name,
+                                                                                     "updated_at": dt.datetime.now().strftime(
+                                                                                         "%Y-%m-%d %H:%M:%S"),
+                                                                                     "assigned": "true"}})
+                            db2.update_one({"_id": ObjectId(location_id)}, {"$set": {"employee": employee_name,
+                                                                                     "updated_at": dt.datetime.now().strftime(
+                                                                                         "%Y-%m-%d %H:%M:%S"),
+                                                                                     "assigned": "true"}})
+                            response = {"status": "success",
+                                        "message": f"{employee_name} assigned to {location_name} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Employee or Country not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
 emp_reg = EmployeeRegistration.as_view('emp_reg_view')
 all_emp = AllEmployee.as_view('all_emp_view')
 emp_details = EmployeeDetails.as_view('emp_details_view')
 emp_status = EmployeeStatusChange.as_view('emp_status_view')
+admin_assign = AdminAssign.as_view('admin_assign_view')
 
 employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
 employee_access.add_url_rule('/employee_access/all_employee', view_func=all_emp, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_details', view_func=emp_details, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_status_change', view_func=emp_status, methods=['POST'])
+employee_access.add_url_rule('/employee_access/admin_assign', view_func=admin_assign, methods=['POST'])
