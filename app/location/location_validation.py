@@ -64,7 +64,7 @@ class RegionRegistrationSchema(Schema):
         if db1.count_documents({"country": data['country'], "location": data['location']}):
             raise ValidationError({"region": ["This region already added under this country"]})
 
-        if not re.match(name_check, data['region']):
+        if not re.match(name_check, data['location']):
             raise ValidationError(ALPHABET_ERROR_MESSAGE)
 
     @validates('email_id')
@@ -100,10 +100,10 @@ class LoginSchema(Schema):
     def validate_login(self, data, **kwargs):
         db = database_connect_mongo()
         db1 = db["location"]
-        employee = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
+        location = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
 
-        if employee is not None:
-            if not pbkdf2_sha256.verify(data['password'], employee['password']):
+        if location is not None:
+            if not pbkdf2_sha256.verify(data['password'], location['password']):
                 raise ValidationError("Incorrect password")
 
         else:

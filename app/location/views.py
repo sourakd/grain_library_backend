@@ -109,7 +109,7 @@ class AddRegion(MethodView):
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "password": password, "country": country, "email_id": email_id, "location": location,
-                            "assigned": "false", "type_id": "region"}
+                            "assigned": "false"}
 
                     # Validate the data using the schema
                     try:
