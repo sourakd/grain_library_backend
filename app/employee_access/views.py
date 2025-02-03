@@ -301,7 +301,7 @@ class EmployeeAssign(MethodView):
                     employee_assigned = employee.get("assigned", None)
 
                     location = db2.find_one({"_id": ObjectId(location_id)})
-                    location_name = location.get("country", None)
+                    location_name = location.get("location", None)
                     location_assigned = location.get("assigned", None)
 
                     if employee and location:
