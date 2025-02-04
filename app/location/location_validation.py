@@ -17,7 +17,7 @@ class CountryRegistrationSchema(Schema):
     password = fields.Str(required=True)
     location = fields.Str(required=True)
     email_id = fields.Email(required=True)
-    assigned = fields.Str(required=True)
+    emp_assign = fields.Str(required=True)
 
 
     @validates('location')
@@ -55,7 +55,7 @@ class RegionRegistrationSchema(Schema):
     country = fields.Str(required=True)
     location = fields.Str(required=True)
     email_id = fields.Email(required=True)
-    assigned = fields.Str(required=True)
+    emp_assign = fields.Str(required=True)
 
     @validates_schema
     def validate_region(self, data, **kwargs):

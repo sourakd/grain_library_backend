@@ -40,7 +40,7 @@ class EmployeeRegistration(MethodView):
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "employee_name": employee_name, "email_id": email_id,
                             "address": address, "id_proof": id_proof, "id_no": id_no,
-                            "phone_number": phone_number, "assigned": "false",
+                            "phone_number": phone_number, "loc_assign": "false",
                             "profile_pic": profile_pic}
 
                     # Validate the data using the schema
@@ -108,9 +108,9 @@ class AllEmployee(MethodView):
                 db1 = db["employee_registration"]
                 data = request.get_json()
                 type_id = data["type_id"]
-                assigned = data["assigned"]
+                assign = data["assign"]
 
-                if type_id and assigned is None or assigned == "":
+                if type_id and assign is None or assign == "":
                     find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id},
                                              {"password": 0}).sort("status", 1)
                     find_employee_list = list(find_employee)
@@ -130,13 +130,13 @@ class AllEmployee(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
-                if type_id and assigned:
-                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "assigned": assigned},
+                if type_id and assign:
+                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "assign": assign},
                                              {"password": 0}).sort(
                         "status", 1)
                     find_employee_list = list(find_employee)
                     total_employee = db1.count_documents(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "assigned": assigned})
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "assign": assign})
 
                     if total_employee != 0:
                         for i in find_employee_list:
@@ -298,25 +298,25 @@ class EmployeeAssign(MethodView):
 
                     employee = db1.find_one({"_id": ObjectId(employee_id)})
                     employee_name = employee.get("employee_name", None)
-                    employee_assigned = employee.get("assigned", None)
+                    employee_assign = employee.get("assign", None)
 
                     location = db2.find_one({"_id": ObjectId(location_id)})
                     location_name = location.get("location", None)
-                    location_assigned = location.get("assigned", None)
+                    location_assign = location.get("assign", None)
 
                     if employee and location:
 
-                        if employee_assigned == "true":
+                        if employee_assign == "true":
                             location = employee["location"]
                             response = {"status": 'val_error', "message": {"Employee": [f"{employee_name} is already "
-                                                                                        f"assigned to {location}"]}}
+                                                                                        f"assign to {location}"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
-                        if location_assigned == "true":
+                        if location_assign == "true":
                             employee = location["employee"]
                             response = {"status": 'val_error', "message": {"Country": [f"{location_name} is already "
-                                                                                       f"assigned with {employee}"]}}
+                                                                                       f"assign with {employee}"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
@@ -324,17 +324,66 @@ class EmployeeAssign(MethodView):
                             db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {"location": location_name,
                                                                                      "updated_at": dt.datetime.now().strftime(
                                                                                          "%Y-%m-%d %H:%M:%S"),
-                                                                                     "assigned": "true"}})
+                                                                                     "assign": "true"}})
                             db2.update_one({"_id": ObjectId(location_id)}, {"$set": {"employee": employee_name,
                                                                                      "updated_at": dt.datetime.now().strftime(
                                                                                          "%Y-%m-%d %H:%M:%S"),
-                                                                                     "assigned": "true"}})
+                                                                                     "assign": "true",
+                                                                                     "privacy_policy": "false"}})
                             response = {"status": "success",
-                                        "message": f"{employee_name} assigned to {location_name} successfully"}
+                                        "message": f"{employee_name} assign to {location_name} successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
                     else:
                         response = {"status": 'val_error', "message": {"Details": ["Employee or Country not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class PrivacyPolicyUpdate(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                data = request.get_json()
+                location_id = data["loc_id"]
+
+                if location_id:
+
+                    location = db1.find_one({"_id": ObjectId(location_id)})
+
+                    if location:
+                        db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
+                            "updated_at": dt.datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S"),
+                            "privacy_policy": "true"}})
+                        response = {"status": "success",
+                                    "message": f"Privacy policy updated successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -361,9 +410,11 @@ all_emp = AllEmployee.as_view('all_emp_view')
 emp_details = EmployeeDetails.as_view('emp_details_view')
 emp_status = EmployeeStatusChange.as_view('emp_status_view')
 employee_assign = EmployeeAssign.as_view('admin_assign_view')
+privacy_policy = PrivacyPolicyUpdate.as_view('privacy_policy_view')
 
 employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
 employee_access.add_url_rule('/employee_access/all_employee', view_func=all_emp, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_details', view_func=emp_details, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_status_change', view_func=emp_status, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_assign', view_func=employee_assign, methods=['POST'])
+employee_access.add_url_rule('/employee_access/privacy_policy', view_func=privacy_policy, methods=['POST'])

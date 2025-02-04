@@ -44,6 +44,9 @@ class AddGrain(MethodView):
                         # Add type field
                         validated_data["type_id"] = "grain"
 
+                        # Add location assign
+                        validated_data["loc_assign"] = "false"
+
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
@@ -369,12 +372,159 @@ class GStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
+class AssignGrain(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                db2 = db["location"]
+                db3 = db["grain_assign"]
+                data = request.get_json()
+                g_id = data["g_id"]
+                loc_id = data["loc_id"]
+
+                if g_id and loc_id:
+
+                    find_grain = db1.find_one({"_id": ObjectId(g_id), "status": "active"})
+                    grain_name = find_grain["grain"]
+
+                    find_location = db2.find_one({"_id": ObjectId(loc_id), "status": "active"})
+                    location_name = find_location["location"]
+
+                    if find_grain and find_location:
+
+                        grain_assign = db3.find_one(
+                            {"grain": grain_name, "location": location_name, "status": {"$ne": "delete"}})
+                        print(grain_assign)
+
+                        if grain_assign is not None:
+
+                            response = {"status": 'val_error', "message": {"Details": ["Grain already assigned"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        else:
+
+                            db3.insert_one({"grain": grain_name, "location": location_name, "status": "active",
+                                            "type_id": "grain_assign",
+                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+
+                            response = {"status": "success",
+                                        "message": f"{grain_name} assigned to {location_name} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain or location not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class AssignGrainVariant(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                db2 = db["grain"]
+                db3 = db["grain_assign"]
+                data = request.get_json()
+                c_id = data["c_id"]
+                r_id = data["r_id"]
+                g_id = data["g_id"]
+                grain_varient = data["grain_variant"]
+
+                if c_id and r_id and g_id:
+
+                    find_country = db1.find_one({"_id": ObjectId(c_id), "status": "active", "type_id": "country"})
+                    country_name = find_country["location"]
+
+                    find_region = db1.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
+                    region_name = find_region["location"]
+
+                    find_grain = db2.find_one({"_id": ObjectId(g_id), "status": "active"})
+                    grain_name = find_grain["grain"]
+
+                    if find_country and find_region and find_grain:
+
+                        grain_variant_assign = db3.find_one(
+                            {"grain": grain_name, "country": country_name, "region": region_name,
+                             "grain_variant": grain_varient, "status": {"$ne": "delete"}})
+
+                        if grain_variant_assign is not None:
+
+                            response = {"status": 'val_error',
+                                        "message": {"Details": ["Grain variant already assigned"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        else:
+
+                            db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
+                                            "grain_variant": grain_varient, "status": "active",
+                                            "type_id": "grain_assign",
+                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+
+                            response = {"status": "success",
+                                        "message": f"{grain_varient} assigned to {region_name} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain or location not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": "Database connection failed"}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
 grain_add_view = AddGrain.as_view('grain_add_view')
 grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
 grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
 grain_variant_fetch_view = FetchAllGrainVariant.as_view('grain_fetch_variant_view')
 g_status_change = GStatusChange.as_view('g_status')
 g_details = FetchGDetails.as_view('g_details')
+assign_grain = AssignGrain.as_view('grain_assign')
+assign_grain_variant = AssignGrainVariant.as_view('grain_assign_variant')
 
 grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
 grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
@@ -382,3 +532,5 @@ grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods
 grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/g_status_change', view_func=g_status_change, methods=['POST'])
 grain_add.add_url_rule('/grain/g_details', view_func=g_details, methods=['POST'])
+grain_add.add_url_rule('/grain/assign_grain', view_func=assign_grain, methods=['POST'])
+grain_add.add_url_rule('/grain/assign_grain_variant', view_func=assign_grain_variant, methods=['POST'])

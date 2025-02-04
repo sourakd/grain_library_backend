@@ -35,7 +35,7 @@ class AddCountry(MethodView):
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "location": location, "email_id": email_id, "assigned": "false"}
+                            "password": password, "location": location, "email_id": email_id, "emp_assign": "false"}
 
                     # Validate the data using the schema
                     try:
@@ -109,7 +109,7 @@ class AddRegion(MethodView):
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "password": password, "country": country, "email_id": email_id, "location": location,
-                            "assigned": "false"}
+                            "emp_assign": "false"}
 
                     # Validate the data using the schema
                     try:
@@ -237,46 +237,7 @@ class Login(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class FetchCountry(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["location"]
-                find_country = db1.find({"status": "active", "type_id": "country"}, {"country": 1})
-                find_country_list = list(find_country)
-                total_country = db1.count_documents({"status": "active", "type_id": "country"})
-
-                if total_country != 0:
-                    for i in find_country_list:
-                        i["_id"] = str(i["_id"])
-                    response = {"status": "success", "data": find_country_list, "total_country": total_country,
-                                "message": "Country "
-                                           "fetched "
-                                           "successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
-                else:
-                    response = {"status": 'val_error', "message": {"country": ["Please add a country first"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
-class FetchRegion(MethodView):
+class FetchLocation(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
@@ -285,32 +246,22 @@ class FetchRegion(MethodView):
             if db is not None:
                 db1 = db["location"]
                 data = request.get_json()
-                country = data["country"]
+                type_id = data["type_id"]
+                find_location = db1.find({"status": "active", "type_id": type_id}, {"location": 1})
+                find_location_list = list(find_location)
+                total_location = db1.count_documents({"status": "active", "type_id": type_id})
 
-                if country:
-                    find_region = db1.find({"status": "active", "type_id": "region", "country": country},
-                                           {"region": 1})
-                    find_region_list = list(find_region)
-                    total_region = db1.count_documents(
-                        {"status": "active", "type_id": "region", "country": country})
-
-                    if total_region != 0:
-                        for i in find_region_list:
-                            i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_region_list,
-                                    "total_region": total_region, "message": "all region "
-                                                                             "fetched "
-                                                                             "successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-
-                    else:
-                        response = {"status": 'val_error', "message": {"region": ["Please check the country name"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
+                if total_location != 0:
+                    for i in find_location_list:
+                        i["_id"] = str(i["_id"])
+                    response = {"status": "success", "data": find_location_list, "total_country": total_location,
+                                "message": "Location "
+                                           "fetched "
+                                           "successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
                 else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    response = {"status": 'val_error', "message": {"country": ["Please add a location first"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 
@@ -327,14 +278,65 @@ class FetchRegion(MethodView):
             return make_response(jsonify(response)), 400
 
 
+# class FetchRegion(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is not None:
+#                 db1 = db["location"]
+#                 data = request.get_json()
+#                 country = data["country"]
+#
+#                 if country:
+#                     find_region = db1.find({"status": "active", "type_id": "region", "country": country},
+#                                            {"region": 1})
+#                     find_region_list = list(find_region)
+#                     total_region = db1.count_documents(
+#                         {"status": "active", "type_id": "region", "country": country})
+#
+#                     if total_region != 0:
+#                         for i in find_region_list:
+#                             i["_id"] = str(i["_id"])
+#                         response = {"status": "success", "data": find_region_list,
+#                                     "total_region": total_region, "message": "all region "
+#                                                                              "fetched "
+#                                                                              "successfully"}
+#                         stop_and_check_mongo_status(conn)
+#                         return make_response(jsonify(response)), 200
+#
+#                     else:
+#                         response = {"status": 'val_error', "message": {"region": ["Please check the country name"]}}
+#                         stop_and_check_mongo_status(conn)
+#                         return make_response(jsonify(response)), 400
+#
+#                 else:
+#                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 400
+#
+#             else:
+#                 response = {"status": 'val_error', "message": "Database connection failed"}
+#                 stop_and_check_mongo_status(conn)
+#                 return make_response(jsonify(response)), 400
+#
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc()
+#             response = {"status": 'val_error', "message": f'{str(e)}'}
+#             stop_and_check_mongo_status(conn)
+#             return make_response(jsonify(response)), 400
+
+
 cnt_add = AddCountry.as_view('cnt_add_view')
 reg_add = AddRegion.as_view('reg_add_view')
 login_user = Login.as_view('login_view')
-fetch_country = FetchCountry.as_view('fetch_country')
-fetch_region = FetchRegion.as_view('fetch_region')
+fetch_location = FetchLocation.as_view('fetch_country')
+# fetch_region = FetchRegion.as_view('fetch_region')
 
 location_add.add_url_rule('/location/add_country', view_func=cnt_add, methods=['POST'])
 location_add.add_url_rule('/location/add_region', view_func=reg_add, methods=['POST'])
 location_add.add_url_rule('/location/login', view_func=login_user, methods=['POST'])
-location_add.add_url_rule('/location/fetch_country', view_func=fetch_country, methods=['POST'])
-location_add.add_url_rule('/location/fetch_region', view_func=fetch_region, methods=['POST'])
+location_add.add_url_rule('/location/fetch_location', view_func=fetch_location, methods=['POST'])
+# location_add.add_url_rule('/location/fetch_region', view_func=fetch_region, methods=['POST'])
