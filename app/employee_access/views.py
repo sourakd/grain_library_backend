@@ -40,7 +40,7 @@ class EmployeeRegistration(MethodView):
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "employee_name": employee_name, "email_id": email_id,
                             "address": address, "id_proof": id_proof, "id_no": id_no,
-                            "phone_number": phone_number, "loc_assign": "false",
+                            "phone_number": phone_number,
                             "profile_pic": profile_pic}
 
                     # Validate the data using the schema
@@ -67,6 +67,7 @@ class EmployeeRegistration(MethodView):
 
                         # Insert the data into the database
                         validated_data["profile_pic"] = file_url
+                        validated_data["loc_assign"] = "false"
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
@@ -338,11 +339,11 @@ class EmployeeAssign(MethodView):
                             db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {"location": location_name,
                                                                                      "updated_at": dt.datetime.now().strftime(
                                                                                          "%Y-%m-%d %H:%M:%S"),
-                                                                                     "assign": "true"}})
+                                                                                     "loc_assign": "true"}})
                             db2.update_one({"_id": ObjectId(location_id)}, {"$set": {"employee": employee_name,
                                                                                      "updated_at": dt.datetime.now().strftime(
                                                                                          "%Y-%m-%d %H:%M:%S"),
-                                                                                     "assign": "true",
+                                                                                     "emp_assign": "true",
                                                                                      "privacy_policy": "false"}})
                             response = {"status": "success",
                                         "message": f"{employee_name} assign to {location_name} successfully"}

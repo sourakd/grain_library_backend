@@ -21,7 +21,6 @@ class EmployeeRegistrationSchema(Schema):
     address = fields.Str(required=True)
     id_proof = fields.Str(required=True)
     id_no = fields.Str(required=True)
-    loc_assign = fields.Str(required=True)
 
     @validates('employee_name')
     def validate_employee_name(self, value):
