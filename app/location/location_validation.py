@@ -19,7 +19,6 @@ class CountryRegistrationSchema(Schema):
     email_id = fields.Email(required=True)
     emp_assign = fields.Str(required=True)
 
-
     @validates('location')
     def validate_location(self, value):
         db = database_connect_mongo()
@@ -103,8 +102,12 @@ class LoginSchema(Schema):
         location = db1.find_one({"email_id": {"$eq": data['email_id']}}, collation={"locale": "en", "strength": 2})
 
         if location is not None:
+
+            if location['emp_assign'] == "false":
+                raise ValidationError({"assign": ["This location is not assigned to any employee"]})
+
             if not pbkdf2_sha256.verify(data['password'], location['password']):
-                raise ValidationError("Incorrect password")
+                raise ValidationError({"password": ["Password is incorrect"]})
 
         else:
             raise ValidationError({"email_id": ["Email does not exist"]})

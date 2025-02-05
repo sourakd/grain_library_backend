@@ -299,12 +299,26 @@ class EmployeeAssign(MethodView):
                     employee = db1.find_one({"_id": ObjectId(employee_id)})
                     employee_name = employee.get("employee_name", None)
                     employee_assign = employee.get("assign", None)
+                    employee_type = employee.get("type_id", None)
 
                     location = db2.find_one({"_id": ObjectId(location_id)})
                     location_name = location.get("location", None)
                     location_assign = location.get("assign", None)
+                    location_type = location.get("type_id", None)
 
                     if employee and location:
+
+                        if employee_type == "admin" and location_type != "country":
+                            response = {"status": 'val_error', "message": {"Details": ["This employee only assign to "
+                                                                                       "country"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if location_type == "country" and employee_type != "admin":
+                            response = {"status": 'val_error', "message": {"Details": ["This country only assign to "
+                                                                                       "admin"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
 
                         if employee_assign == "true":
                             location = employee["location"]
