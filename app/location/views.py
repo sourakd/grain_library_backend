@@ -4,6 +4,7 @@ from datetime import datetime
 
 import jwt
 import pytz
+from bson import ObjectId
 from flask import Blueprint, make_response, jsonify, request, current_app
 from flask.views import MethodView
 from flask_cors import cross_origin
@@ -77,7 +78,7 @@ class AddCountry(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -98,52 +99,65 @@ class AddRegion(MethodView):
             if db is not None:
                 db1 = db["location"]
                 data = request.get_json()
-                country = data["country"]
+                c_id = data["c_id"]
                 location = data["location"]
                 email_id = data["email_id"].lower()
                 password = data["password"]
 
-                if country and email_id and password and location:
+                if c_id and email_id and password and location:
 
-                    # Validate the data using the schema
-                    data = {"status": "active",
-                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "country": country, "email_id": email_id, "location": location,
-                            "emp_assign": "false"}
+                    c_find = db1.find_one({"_id": ObjectId(c_id), "status": "active", "type_id": "country"})
+                    country = c_find['location']
 
-                    # Validate the data using the schema
-                    try:
-                        validated_data = region_registration_schema.load(data)
-                    except ValidationError as err:
-                        response = {"message": err.messages, "status": "val_error"}
+                    if country is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Country does not exist"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Hash the password
-                        validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
 
-                        # Update the updated_at field
-                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                        # Validate the data using the schema
+                        data = {"status": "active",
+                                "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
+                                "password": password, "country": country, "email_id": email_id, "location": location,
+                                "emp_assign": "false"}
 
-                        # Add type
-                        validated_data["type_id"] = "region"
+                        # Validate the data using the schema
+                        try:
+                            validated_data = region_registration_schema.load(data)
+                        except ValidationError as err:
+                            response = {"message": err.messages, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
 
-                        db1.insert_one(validated_data)
+                        else:
+                            # Hash the password
+                            validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
 
-                        # Remove the password from the data
-                        del validated_data["password"]
+                            # Update the updated_at field
+                            validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-                        # Extract the _id value
-                        validated_data["_id"] = str(validated_data["_id"])
+                            # Add type
+                            validated_data["type_id"] = "region"
 
-                        # Create the response
-                        response = {"message": "Region added successfully", "status": "success",
-                                    "data": validated_data}
-                        stop_and_check_mongo_status(conn)
+                            # Add country_id
+                            validated_data["c_id"] = c_id
 
-                        # Return the response
-                        return make_response(jsonify(response)), 200
+                            db1.insert_one(validated_data)
+
+                            # Remove the password from the data
+                            del validated_data["password"]
+
+                            # Extract the _id value
+                            validated_data["_id"] = str(validated_data["_id"])
+
+                            # Create the response
+                            response = {"message": "Region added successfully", "status": "success",
+                                        "data": validated_data}
+                            stop_and_check_mongo_status(conn)
+
+                            # Return the response
+                            return make_response(jsonify(response)), 200
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -151,7 +165,7 @@ class AddRegion(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -225,48 +239,7 @@ class Login(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
-class FetchLocation(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["location"]
-                data = request.get_json()
-                type_id = data["type_id"]
-                find_location = db1.find({"status": "active", "type_id": type_id}, {"location": 1})
-                find_location_list = list(find_location)
-                total_location = db1.count_documents({"status": "active", "type_id": type_id})
-
-                if total_location != 0:
-                    for i in find_location_list:
-                        i["_id"] = str(i["_id"])
-                    response = {"status": "success", "data": find_location_list, "total_country": total_location,
-                                "message": "Location "
-                                           "fetched "
-                                           "successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
-                else:
-                    response = {"status": 'val_error', "message": {"country": ["Please add a location first"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -307,7 +280,7 @@ class FetchRegion(MethodView):
                         return make_response(jsonify(response)), 200
 
                     else:
-                        response = {"status": 'val_error', "message": {"region": ["Please check the country name"]}}
+                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -317,7 +290,48 @@ class FetchRegion(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class FetchCountry(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["location"]
+                data = request.get_json()
+                type_id = data["type_id"]
+                find_location = db1.find({"status": "active", "type_id": type_id}, {"location": 1})
+                find_location_list = list(find_location)
+                total_location = db1.count_documents({"status": "active", "type_id": type_id})
+
+                if total_location != 0:
+                    for i in find_location_list:
+                        i["_id"] = str(i["_id"])
+                    response = {"status": "success", "data": find_location_list, "total_country": total_location,
+                                "message": "Location "
+                                           "fetched "
+                                           "successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+                else:
+                    response = {"status": 'val_error', "message": {"country": ["Please add a location first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -332,11 +346,11 @@ class FetchRegion(MethodView):
 cnt_add = AddCountry.as_view('cnt_add_view')
 reg_add = AddRegion.as_view('reg_add_view')
 login_user = Login.as_view('login_view')
-fetch_location = FetchLocation.as_view('fetch_country')
+fetch_country = FetchCountry.as_view('fetch_country')
 fetch_region = FetchRegion.as_view('fetch_region')
 
 location_add.add_url_rule('/location/add_country', view_func=cnt_add, methods=['POST'])
 location_add.add_url_rule('/location/add_region', view_func=reg_add, methods=['POST'])
 location_add.add_url_rule('/location/login', view_func=login_user, methods=['POST'])
-location_add.add_url_rule('/location/fetch_location', view_func=fetch_location, methods=['POST'])
+location_add.add_url_rule('/location/fetch_country', view_func=fetch_country, methods=['POST'])
 location_add.add_url_rule('/location/fetch_region', view_func=fetch_region, methods=['POST'])

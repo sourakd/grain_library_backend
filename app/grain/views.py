@@ -44,9 +44,6 @@ class AddGrain(MethodView):
                         # Add type field
                         validated_data["type_id"] = "grain"
 
-                        # Add location assign
-                        validated_data["loc_assign"] = "false"
-
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
@@ -65,7 +62,7 @@ class AddGrain(MethodView):
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -127,7 +124,7 @@ class AddGrain(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
                 else:
-                    response = {"status": 'val_error', "message": "Database connection failed"}
+                    response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 
@@ -203,7 +200,7 @@ class FetchAllGrain(MethodView):
 #                     return make_response(jsonify(response)), 200
 #
 #             else:
-#                 response = {"status": 'val_error', "message": "Database connection failed"}
+#                 response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
 #                 stop_and_check_mongo_status(conn)
 #                 return make_response(jsonify(response)), 200
 #
@@ -256,7 +253,7 @@ class FetchAllGrainVariant(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -279,15 +276,15 @@ class FetchSpecificGrainVariant(MethodView):
                 data = request.get_json()
                 c_id = data["c_id"]
                 r_id = data["r_id"]
-                g_id = data["g_id"]
+                g_a_id = data["g_a_id"]
 
-                if c_id and r_id and g_id:
+                if c_id and r_id and g_a_id:
                     find_grain_variant = db1.find(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_id": g_id},
+                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id},
                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
                     find_grain_variant_list = list(find_grain_variant)
                     total_grain_variant = db1.count_documents(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_id": g_id,
+                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
                          "type_id": "grain_variant_assign"})
 
                     if total_grain_variant != 0:
@@ -312,7 +309,7 @@ class FetchSpecificGrainVariant(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -417,7 +414,7 @@ class GStatusChange(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -446,6 +443,7 @@ class AssignGrain(MethodView):
                 if g_id and loc_id:
 
                     find_grain = db1.find_one({"_id": ObjectId(g_id), "status": "active"})
+                    print(find_grain)
                     grain_name = find_grain["grain"]
 
                     find_location = db2.find_one({"_id": ObjectId(loc_id), "status": "active"})
@@ -486,7 +484,7 @@ class AssignGrain(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -506,15 +504,14 @@ class AssignGrainVariant(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["location"]
-                db2 = db["grain"]
                 db3 = db["grain_assign"]
                 data = request.get_json()
                 c_id = data["c_id"]
                 r_id = data["r_id"]
-                g_id = data["g_id"]
+                g_a_id = data["g_a_id"]
                 grain_variant = data["grain_variant"]
 
-                if c_id and r_id and g_id:
+                if c_id and r_id and g_a_id:
 
                     find_country = db1.find_one({"_id": ObjectId(c_id), "status": "active", "type_id": "country"})
                     country_name = find_country["location"]
@@ -522,7 +519,7 @@ class AssignGrainVariant(MethodView):
                     find_region = db1.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
                     region_name = find_region["location"]
 
-                    find_grain = db2.find_one({"_id": ObjectId(g_id), "status": "active"})
+                    find_grain = db3.find_one({"_id": ObjectId(g_a_id), "status": "active", "type_id": "grain_assign"})
                     grain_name = find_grain["grain"]
 
                     if find_country and find_region and find_grain:
@@ -542,7 +539,8 @@ class AssignGrainVariant(MethodView):
 
                             db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
                                             "grain_variant": grain_variant, "status": "active",
-                                            "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id, "g_id": g_id,
+                                            "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
+                                            "g_a_id": g_a_id,
                                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                             "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
@@ -562,7 +560,7 @@ class AssignGrainVariant(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 

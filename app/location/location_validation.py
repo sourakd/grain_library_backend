@@ -87,7 +87,8 @@ class RegionRegistrationSchema(Schema):
     def validate_country(self, value):
         db = database_connect_mongo()
         db1 = db["location"]
-        if db1.count_documents({"country": {"$eq": value}}, collation={"locale": "en", "strength": 2}) == 0:
+        if db1.count_documents({"location": {"$eq": value}, "type_id": "country"},
+                               collation={"locale": "en", "strength": 2}) == 0:
             raise ValidationError("Country not found")
 
 

@@ -87,7 +87,7 @@ class EmployeeRegistration(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -132,12 +132,13 @@ class AllEmployee(MethodView):
                         return make_response(jsonify(response)), 400
 
                 if type_id and assign:
-                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "assign": assign},
+                    print("Please")
+                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "loc_assign": assign},
                                              {"password": 0}).sort(
                         "status", 1)
                     find_employee_list = list(find_employee)
                     total_employee = db1.count_documents(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "assign": assign})
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_assign": assign})
 
                     if total_employee != 0:
                         for i in find_employee_list:

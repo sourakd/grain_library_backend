@@ -92,7 +92,7 @@ class SuperEmployeeRegistration(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -164,7 +164,7 @@ class AddSuperLocation(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -238,7 +238,7 @@ class SuperLogin(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
