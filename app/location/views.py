@@ -264,7 +264,7 @@ class FetchRegion(MethodView):
 
                 if country:
                     find_region = db1.find({"status": "active", "type_id": "region", "country": country},
-                                           {"region": 1})
+                                           {"location": 1})
                     find_region_list = list(find_region)
                     total_region = db1.count_documents(
                         {"status": "active", "type_id": "region", "country": country})
