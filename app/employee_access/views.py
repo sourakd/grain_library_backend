@@ -283,7 +283,7 @@ class EmployeeStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class EmployeeAssign(MethodView):
+class AdminAssign(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
@@ -298,27 +298,30 @@ class EmployeeAssign(MethodView):
 
                 if employee_id and location_id:
 
-                    employee = db1.find_one({"_id": ObjectId(employee_id)})
-                    employee_name = employee.get("employee_name", None)
-                    employee_assign = employee.get("assign", None)
-                    employee_type = employee.get("type_id", None)
+                    employee = db1.find_one({"_id": ObjectId(employee_id), "status": "active", "type_id": "admin"})
 
-                    location = db2.find_one({"_id": ObjectId(location_id)})
-                    location_name = location.get("location", None)
-                    location_assign = location.get("assign", None)
-                    location_type = location.get("type_id", None)
+                    location = db2.find_one({"_id": ObjectId(location_id), "status": "active", "type_id": "country"})
 
-                    if employee and location:
+                    if employee is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
-                        if employee_type == "admin" and location_type != "country":
-                            response = {"status": 'val_error', "message": {"Details": ["This employee only assign to "
-                                                                                       "country"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
+                    if location is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
-                        if location_type == "country" and employee_type != "admin":
-                            response = {"status": 'val_error', "message": {"Details": ["This country only assign to "
-                                                                                       "admin"]}}
+                    else:
+                        employee_name = employee.get("employee_name", None)
+                        employee_assign = employee.get("assign", None)
+                        employee_type = employee.get("type_id", None)
+                        location_name = location.get("location", None)
+                        location_assign = location.get("assign", None)
+                        location_type = location.get("type_id", None)
+
+                        if employee_type != "admin" or location_type != "country":
+                            response = {"status": 'val_error', "message": {"Details": ["Only admin assign to country"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
@@ -337,23 +340,114 @@ class EmployeeAssign(MethodView):
                             return make_response(jsonify(response)), 400
 
                         else:
-                            db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {"location": location_name,
-                                                                                     "updated_at": dt.datetime.now().strftime(
-                                                                                         "%Y-%m-%d %H:%M:%S"),
-                                                                                     "loc_assign": "true"}})
-                            db2.update_one({"_id": ObjectId(location_id)}, {"$set": {"employee": employee_name,
-                                                                                     "updated_at": dt.datetime.now().strftime(
-                                                                                         "%Y-%m-%d %H:%M:%S"),
-                                                                                     "emp_assign": "true",
-                                                                                     "privacy_policy": "false"}})
+                            db1.update_one({"_id": ObjectId(employee_id)},
+                                           {"$set": {"location": location_name, "loc_id": location_id,
+                                                     "updated_at": dt.datetime.now().strftime(
+                                                         "%Y-%m-%d %H:%M:%S"),
+                                                     "loc_assign": "true"}})
+                            db2.update_one({"_id": ObjectId(location_id)},
+                                           {"$set": {"employee": employee_name, "emp_id": employee_id,
+                                                     "updated_at": dt.datetime.now().strftime(
+                                                         "%Y-%m-%d %H:%M:%S"),
+                                                     "emp_assign": "true",
+                                                     "privacy_policy": "false"}})
                             response = {"status": "success",
                                         "message": f"{employee_name} assign to {location_name} successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
-                    else:
-                        response = {"status": 'val_error', "message": {"Details": ["Employee or Country not found"]}}
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class SubAdminAssign(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["employee_registration"]
+                db2 = db["location"]
+                data = request.get_json()
+                employee_id = data["emp_id"]
+                c_id = data["c_id"]
+                r_id = data["r_id"]
+
+                if employee_id and c_id and r_id:
+
+                    employee = db1.find_one({"_id": ObjectId(employee_id), "status": "active", "type_id": "sub_admin"})
+
+                    location = db2.find_one(
+                        {"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
+
+                    if employee is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
+
+                    if location is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Region not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    else:
+                        employee_name = employee.get("employee_name", None)
+                        employee_assign = employee.get("assign", None)
+                        employee_type = employee.get("type_id", None)
+                        location_name = location.get("location", None)
+                        location_assign = location.get("emp_assign", None)
+                        location_type = location.get("type_id", None)
+
+                        if employee_type != "sub_admin" or location_type != "region":
+                            response = {"status": 'val_error',
+                                        "message": {"Details": ["Only sub admin assign to region"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if employee_assign == "true":
+                            location = employee["location"]
+                            response = {"status": 'val_error', "message": {"Employee": [f"{employee_name} is already "
+                                                                                        f"assign to {location}"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if location_assign == "true":
+                            employee = location["employee"]
+                            response = {"status": 'val_error', "message": {"Region": [f"{location_name} is already "
+                                                                                      f"assign with {employee}"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        else:
+                            db1.update_one({"_id": ObjectId(employee_id)},
+                                           {"$set": {"location": location_name, "loc_id": r_id,
+                                                     "updated_at": dt.datetime.now().strftime(
+                                                         "%Y-%m-%d %H:%M:%S"),
+                                                     "loc_assign": "true"}})
+                            db2.update_one({"_id": ObjectId(r_id)},
+                                           {"$set": {"employee": employee_name, "emp_id": employee_id,
+                                                     "updated_at": dt.datetime.now().strftime(
+                                                         "%Y-%m-%d %H:%M:%S"),
+                                                     "emp_assign": "true"}})
+                            response = {"status": "success",
+                                        "message": f"{employee_name} assign to {location_name} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -425,12 +519,14 @@ emp_reg = EmployeeRegistration.as_view('emp_reg_view')
 all_emp = AllEmployee.as_view('all_emp_view')
 emp_details = EmployeeDetails.as_view('emp_details_view')
 emp_status = EmployeeStatusChange.as_view('emp_status_view')
-employee_assign = EmployeeAssign.as_view('admin_assign_view')
+admin_assign = AdminAssign.as_view('admin_assign_view')
+sub_admin_assign = SubAdminAssign.as_view('sub_admin_assign_view')
 privacy_policy = PrivacyPolicyUpdate.as_view('privacy_policy_view')
 
 employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
 employee_access.add_url_rule('/employee_access/all_employee', view_func=all_emp, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_details', view_func=emp_details, methods=['POST'])
 employee_access.add_url_rule('/employee_access/employee_status_change', view_func=emp_status, methods=['POST'])
-employee_access.add_url_rule('/employee_access/employee_assign', view_func=employee_assign, methods=['POST'])
+employee_access.add_url_rule('/employee_access/admin_assign', view_func=admin_assign, methods=['POST'])
+employee_access.add_url_rule('/employee_access/sub_admin_assign', view_func=sub_admin_assign, methods=['POST'])
 employee_access.add_url_rule('/employee_access/privacy_policy', view_func=privacy_policy, methods=['POST'])
