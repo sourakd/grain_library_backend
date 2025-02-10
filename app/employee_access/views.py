@@ -467,6 +467,22 @@ class SubAdminAssign(MethodView):
             return make_response(jsonify(response)), 400
 
 
+# class EditorAssign(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is not None:
+#                 db1 = db["employee_registration"]
+#                 db2 = db["location"]
+#                 db3 = db["grain_assign"]
+#                 data = request.get_json()
+#                 employee_id = data["emp_id"]
+#                 c_id = data["c_id"]
+#                 r_id = data["r_id"]
+#                 g_id = data["g_id"]
+
 class PrivacyPolicyUpdate(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):

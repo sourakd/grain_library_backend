@@ -496,6 +496,58 @@ class AssignGrain(MethodView):
             return make_response(jsonify(response)), 400
 
 
+class FetchSpecificGrain(MethodView):
+
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain_assign"]
+                data = request.get_json()
+                c_id = data["c_id"]
+
+                if c_id:
+                    find_grain = db1.find({"c_id": c_id, "status": "active", "type_id": "grain_assign"},
+                                          {"grain": 1, "status": 1}).sort("grain", 1)
+                    grain_list = list(find_grain)
+                    total_grain = len(grain_list)
+
+                    if total_grain > 0:
+
+                        for i in grain_list:
+                            i["_id"] = str(i["_id"])
+
+                        response = {"status": "success", "data": grain_list,
+                                    "total_grain": total_grain, "message": "Grains "
+                                                                           "fetched "
+                                                                           "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
 class AssignGrainVariant(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -642,6 +694,7 @@ assign_grain = AssignGrain.as_view('grain_assign')
 assign_grain_variant = AssignGrainVariant.as_view('grain_assign_variant')
 specific_grain_variant_fetch = FetchSpecificGrainVariant.as_view('specific_grain_variant_fetch')
 grain_variant_status_change = GrainVariantStatusChange.as_view('grain_variant_status_change')
+specific_grain_fetch = FetchSpecificGrain.as_view('specific_grain_fetch')
 
 grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
 grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
@@ -653,3 +706,4 @@ grain_add.add_url_rule('/grain/assign_grain', view_func=assign_grain, methods=['
 grain_add.add_url_rule('/grain/assign_grain_variant', view_func=assign_grain_variant, methods=['POST'])
 grain_add.add_url_rule('/grain/specific_grain_variant_fetch', view_func=specific_grain_variant_fetch, methods=['POST'])
 grain_add.add_url_rule('/grain/grain_variant_status_change', view_func=grain_variant_status_change, methods=['POST'])
+grain_add.add_url_rule('/grain/specific_grain_fetch', view_func=specific_grain_fetch, methods=['POST'])
