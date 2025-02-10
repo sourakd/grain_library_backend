@@ -5,6 +5,7 @@ from flask import Blueprint, make_response, jsonify, request
 from flask.views import MethodView
 from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
+from pymongo.errors import PyMongoError
 
 from app.employee_access.employee_validation import employee_registration_schema
 from app.helpers import S3Uploader
@@ -256,10 +257,12 @@ class EmployeeStatusChange(MethodView):
                             {"type_id": type_id, "_id": ObjectId(employee_id), "status": {"$ne": "delete"}},
                             {"$set": {"status": emp_status,
                                       "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
-                        if update_status.matched_count == 1 and update_status.modified_count == 1:
+
+                        if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Employee {emp_status} successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
+
                         else:
                             response = {"status": "error", "message": "Employee not updated"}
                             stop_and_check_mongo_status(conn)
@@ -339,23 +342,50 @@ class AdminAssign(MethodView):
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
-                        else:
-                            db1.update_one({"_id": ObjectId(employee_id)},
-                                           {"$set": {"location": location_name, "loc_id": location_id,
-                                                     "updated_at": dt.datetime.now().strftime(
-                                                         "%Y-%m-%d %H:%M:%S"),
-                                                     "loc_assign": "true"}})
-                            db2.update_one({"_id": ObjectId(location_id)},
-                                           {"$set": {"employee": employee_name, "emp_id": employee_id,
-                                                     "updated_at": dt.datetime.now().strftime(
-                                                         "%Y-%m-%d %H:%M:%S"),
-                                                     "emp_assign": "true",
-                                                     "privacy_policy": "false"}})
-                            response = {"status": "success",
-                                        "message": f"{employee_name} assign to {location_name} successfully"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
 
+                        else:
+                            # Start the transaction
+                            with db.client.start_session() as session:
+                                with session.start_transaction():
+                                    try:
+                                        update_status_employee = db1.update_one({"_id": ObjectId(employee_id)},
+                                                                                {"$set": {"location": location_name,
+                                                                                          "loc_id": location_id,
+                                                                                          "updated_at": dt.datetime.now().strftime(
+                                                                                              "%Y-%m-%d %H:%M:%S"),
+                                                                                          "loc_assign": "true"}},
+                                                                                session=session)
+
+                                        update_status_location = db2.update_one({"_id": ObjectId(location_id)},
+                                                                                {"$set": {"employee": employee_name,
+                                                                                          "emp_id": employee_id,
+                                                                                          "updated_at": dt.datetime.now().strftime(
+                                                                                              "%Y-%m-%d %H:%M:%S"),
+                                                                                          "empassign": "true"}},
+
+                                                                                session=session)
+
+                                        if update_status_employee.acknowledged and update_status_employee.modified_count == 1 and \
+                                                update_status_location.acknowledged and update_status_location.modified_count == 1:
+                                            session.commit_transaction()
+                                            response = {"status": "success",
+                                                        "message": f"{employee_name} assign to {location_name} successfully"}
+                                            stop_and_check_mongo_status(conn)
+                                            return make_response(jsonify(response)), 200
+
+                                        else:
+                                            session.abort_transaction()
+                                            response = {"status": "val_error",
+                                                        "message": {
+                                                            "details": ["Failed to assign employee to location"]}}
+                                            stop_and_check_mongo_status(conn)
+                                            return make_response(jsonify(response)), 400
+
+                                    except PyMongoError as e:
+                                        session.abort_transaction()
+                                        response = {"status": 'val_error', "message": f'{str(e)}'}
+                                        stop_and_check_mongo_status(conn)
+                                        return make_response(jsonify(response)), 400
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
@@ -371,7 +401,7 @@ class AdminAssign(MethodView):
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
+            return make_response(jsonify(response)),
 
 
 class SubAdminAssign(MethodView):
@@ -434,20 +464,53 @@ class SubAdminAssign(MethodView):
                             return make_response(jsonify(response)), 400
 
                         else:
-                            db1.update_one({"_id": ObjectId(employee_id)},
-                                           {"$set": {"location": location_name, "loc_id": r_id,
-                                                     "updated_at": dt.datetime.now().strftime(
-                                                         "%Y-%m-%d %H:%M:%S"),
-                                                     "loc_assign": "true"}})
-                            db2.update_one({"_id": ObjectId(r_id)},
-                                           {"$set": {"employee": employee_name, "emp_id": employee_id,
-                                                     "updated_at": dt.datetime.now().strftime(
-                                                         "%Y-%m-%d %H:%M:%S"),
-                                                     "emp_assign": "true"}})
-                            response = {"status": "success",
-                                        "message": f"{employee_name} assign to {location_name} successfully"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
+                            with db1.client.start_session() as session:
+                                with session.start_transaction():
+                                    try:
+                                        update_status_employee = db1.update_one(
+                                            {"_id": ObjectId(employee_id)},
+                                            {"$set": {
+                                                "location": location_name,
+                                                "loc_id": r_id,
+                                                "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                                "loc_assign": True,
+                                                "last_modified_by": "system"  # Audit trail
+                                            }},
+                                            session=session
+                                        )
+
+                                        update_status_location = db2.update_one(
+                                            {"_id": ObjectId(r_id)},
+                                            {"$set": {
+                                                "employee": employee_name,
+                                                "emp_id": employee_id,
+                                                "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                                "emp_assign": True,
+                                                "privacy_policy": False,
+                                                "last_modified_by": "system"  # Audit trail
+                                            }},
+                                            session=session
+                                        )
+
+                                        if update_status_employee.acknowledged and update_status_employee.modified_count == 1 and \
+                                                update_status_location.acknowledged and update_status_location.modified_count == 1:
+                                            response = {"status": "success",
+                                                        "message": f"{employee_name} assign to {location_name} successfully"}
+                                            stop_and_check_mongo_status(conn)
+                                            return make_response(jsonify(response)), 200
+                                        else:
+                                            session.abort_transaction()
+                                            response = {"status": "val_error",
+                                                        "message": {
+                                                            "details": ["Failed to assign employee to location"]}}
+                                            stop_and_check_mongo_status(conn)
+                                            return make_response(jsonify(response)), 400
+
+                                    except PyMongoError as e:
+                                        session.abort_transaction()
+                                        response = {"status": 'val_error', "message": f'{str(e)}'}
+                                        stop_and_check_mongo_status(conn)
+                                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -499,14 +562,21 @@ class PrivacyPolicyUpdate(MethodView):
                     location = db1.find_one({"_id": ObjectId(location_id)})
 
                     if location:
-                        db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
+                        privacy_policy_update = db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
                             "updated_at": dt.datetime.now().strftime(
                                 "%Y-%m-%d %H:%M:%S"),
                             "privacy_policy": "true"}})
-                        response = {"status": "success",
-                                    "message": f"Privacy policy updated successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+
+                        if privacy_policy_update.acknowledged and privacy_policy_update.modified_count == 1:
+                            response = {"status": "success",
+                                        "message": "Privacy policy updated successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+
+                        else:
+                            response = {"status": 'val_error', "message": {"Details": ["Privacy policy not update"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
 
                     else:
                         response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
