@@ -5,48 +5,33 @@ from flask import Blueprint, make_response, jsonify, request
 from flask.views import MethodView
 from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
-from pymongo.errors import PyMongoError
 
-from app.employee_access.employee_validation import employee_registration_schema
-from app.helpers import S3Uploader
+from app.grain.grain_validation import grain_registration_schema, grain_variant_registration_schema
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
-from settings.configuration import S3Config
 
-employee_access = Blueprint('employee_access', __name__)
+grain_add = Blueprint('grain_add', __name__)
 
 
-class EmployeeRegistration(MethodView):
+class AddGrain(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
             start_and_check_mongo()
             db = database_connect_mongo()
             if db is not None:
-                db1 = db["employee_registration"]
-                data = dict(request.form)
-                employee_name = data["employee_name"].lower()
-                email_id = data["email_id"].lower()
-                type_id = data["type_id"].lower()
-                address = data["address"].lower()
-                id_proof = data["id_proof"].lower()
-                phone_number = data["phone_number"]
-                id_no = data["id_no"]
-                profile_pic = request.files.get("profile_pic")
+                db1 = db["grain"]
+                data = request.get_json()
+                grain = data['grain'].lower()
 
-                if employee_name and email_id and phone_number and type_id and profile_pic and address and id_proof and id_no:
-
-                    # emp_schema = EmployeeRegistrationSchema()
-
-                    data = {"status": "active", "type_id": type_id,
+                if grain:
+                    # Validate the data using the schema
+                    data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "employee_name": employee_name, "email_id": email_id,
-                            "address": address, "id_proof": id_proof, "id_no": id_no,
-                            "phone_number": phone_number,
-                            "profile_pic": profile_pic}
+                            "grain": grain}
 
                     # Validate the data using the schema
                     try:
-                        validated_data = employee_registration_schema.load(data)
+                        validated_data = grain_registration_schema.load(data)
                     except ValidationError as err:
                         response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
@@ -56,31 +41,211 @@ class EmployeeRegistration(MethodView):
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-                        s3_config = S3Config()
-                        bucket_status, total_files = s3_config.connect_to_s3()
-                        s3_uploader = S3Uploader(s3_config)
-                        file_url = s3_uploader.upload_file(profile_pic)
+                        # Add type field
+                        validated_data["type_id"] = "grain"
 
-                        if s3_uploader.check_existing_file(file_url):
-                            response = {"message": "File already exist", "status": "val_error"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
-                        # Insert the data into the database
-                        validated_data["profile_pic"] = file_url
-                        validated_data["loc_assign"] = "false"
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
                         validated_data["_id"] = str(validated_data["_id"])
 
                         # Create the response
-                        response = {"message": "Employee registration successful", "status": "success",
+                        response = {"message": "Grain added successfully", "status": "success",
                                     "data": validated_data}
                         stop_and_check_mongo_status(conn)
 
                         # Return the response
                         return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+    class AddGrainVariant(MethodView):
+        @cross_origin(supports_credentials=True)
+        def post(self):
+            try:
+                start_and_check_mongo()
+                db = database_connect_mongo()
+                if db is not None:
+                    db1 = db["grain"]
+                    data = request.get_json()
+                    grain = data['grain'].lower()
+                    grain_variant = data['grain_variant']
+
+                    if grain and grain_variant:
+                        # Validate the data using the schema
+                        data = {"status": "active",
+                                "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
+                                "grain": grain, "grain_variant": grain_variant}
+
+                        # Validate the data using the schema
+                        try:
+                            validated_data = grain_variant_registration_schema.load(data)
+                        except ValidationError as err:
+                            response = {"message": err.messages, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        else:
+                            # Update the updated_at field
+                            validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                            # Add type field
+                            validated_data["type_id"] = "grain_variant"
+
+                            db1.insert_one(validated_data)
+
+                            # Extract the _id value
+                            validated_data["_id"] = str(validated_data["_id"])
+
+                            # Create the response
+                            response = {"message": "Grain variant added successfully", "status": "success",
+                                        "data": validated_data}
+                            stop_and_check_mongo_status(conn)
+
+                            # Return the response
+                            return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                response = {"status": 'val_error', "message": f'{str(e)}'}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+
+class FetchAllGrain(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                find_grain = db1.find({"status": {"$ne": "delete"}, "type_id": "grain"},
+                                      {"grain": 1, "status": 1}).sort("status", 1)
+                find_grain_list = list(find_grain)
+                total_grain = db1.count_documents({"status": "active", "type_id": "grain"})
+
+                if total_grain != 0:
+                    for i in find_grain_list:
+                        i["_id"] = str(i["_id"])
+                    response = {"status": "success", "data": find_grain_list, "total_grain": total_grain,
+                                "message": "Grain "
+                                           "fetched "
+                                           "successfully"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 200
+                else:
+                    response = {"status": 'val_error', "message": {"Grain": ["Please add a grain first"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+# class FetchGrain(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is not None:
+#                 db1 = db["grain"]
+#                 find_grain = db1.find({"status": "active"}, {"grain": 1, "_id": 0})
+#                 total_grain = db1.count_documents({"status": "active", "grain": {"$exists": True}})
+#
+#                 if total_grain != 0:
+#                     grain_list = [i["grain"] for i in find_grain]
+#                     response = {"status": 'success', "data": grain_list, "total_grain": total_grain,
+#                                 "message": "All country fetched successfully"}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 200
+#
+#                 else:
+#                     response = {"status": 'val_error', "message": {"country": ["Please add a grain first"]}}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 200
+#
+#             else:
+#                 response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+#                 stop_and_check_mongo_status(conn)
+#                 return make_response(jsonify(response)), 200
+#
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc()
+#             response = {"status": 'val_error', "message": f'{str(e)}'}
+#             stop_and_check_mongo_status(conn)
+#             return make_response(jsonify(response)), 200
+
+
+class FetchAllGrainVariant(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                data = request.get_json()
+                grain = data["grain"].lower()
+
+                if grain:
+                    find_grain_variant = db1.find(
+                        {"status": {"$ne": "delete"}, "type_id": "grain_variant", "grain": grain},
+                        {"grain_variant": 1}).sort("status", 1)
+                    find_grain_variant_list = list(find_grain_variant)
+                    total_grain_variant = db1.count_documents(
+                        {"status": "active", "type_id": "grain_variant", "grain": grain})
+
+                    if total_grain_variant != 0:
+                        for i in find_grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_grain_variant_list,
+                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
+                                                                                           "fetched "
+                                                                                           "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
+                                                                                         "first"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -100,103 +265,40 @@ class EmployeeRegistration(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class AllEmployee(MethodView):
+class FetchSpecificGrainVariant(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
             start_and_check_mongo()
             db = database_connect_mongo()
             if db is not None:
-                db1 = db["employee_registration"]
+                db1 = db["grain_assign"]
                 data = request.get_json()
-                type_id = data["type_id"]
-                assign = data["assign"]
+                c_id = data["c_id"]
+                r_id = data["r_id"]
+                g_a_id = data["g_a_id"]
 
-                if type_id and assign is None or assign == "":
-                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id},
-                                             {"password": 0}).sort("status", 1)
-                    find_employee_list = list(find_employee)
-                    total_employee = db1.count_documents({"status": {"$ne": "delete"}, "type_id": type_id})
+                if c_id and r_id and g_a_id:
+                    find_grain_variant = db1.find(
+                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
+                         "type_id": "grain_variant_assign"},
+                        {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
+                    find_grain_variant_list = list(find_grain_variant)
+                    total_grain_variant = len(find_grain_variant_list)
 
-                    if total_employee != 0:
-                        for i in find_employee_list:
+                    if total_grain_variant > 0:
+                        for i in find_grain_variant_list:
                             i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_employee_list, "total_employee": total_employee,
-                                    "message": "Employee "
-                                               "fetched "
-                                               "successfully"}
+                        response = {"status": "success", "data": find_grain_variant_list,
+                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
+                                                                                           "fetched "
+                                                                                           "successfully"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 200
+
                     else:
-                        response = {"status": 'val_error', "message": {"Employee": ["Please add an employee first"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                if type_id and assign:
-                    print("Please")
-                    find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "loc_assign": assign},
-                                             {"password": 0}).sort(
-                        "status", 1)
-                    find_employee_list = list(find_employee)
-                    total_employee = db1.count_documents(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_assign": assign})
-
-                    if total_employee != 0:
-                        for i in find_employee_list:
-                            i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_employee_list, "total_employee": total_employee,
-                                    "message": "Employee "
-                                               "fetched "
-                                               "successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-                    else:
-                        response = {"status": 'val_error', "message": {"Employee": ["Please add an employee first"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter type ID"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
-class EmployeeDetails(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["employee_registration"]
-                data = request.get_json()
-                type_id = data["type_id"]
-                employee_id = data["emp_id"]
-
-                if type_id and employee_id:
-                    find_employee = db1.find_one(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "_id": ObjectId(employee_id)},
-                        {"password": 0})
-                    if find_employee:
-                        find_employee["_id"] = str(find_employee["_id"])
-                        response = {"status": "success", "data": find_employee,
-                                    "message": "Employee fetched successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-                    else:
-                        response = {"status": 'val_error', "message": {"Employee": ["Employee not found"]}}
+                        response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
+                                                                                         "first"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -206,7 +308,7 @@ class EmployeeDetails(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -218,22 +320,63 @@ class EmployeeDetails(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class EmployeeStatusChange(MethodView):
+class FetchGDetails(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
             start_and_check_mongo()
             db = database_connect_mongo()
             if db is not None:
-                db1 = db["employee_registration"]
+                db1 = db["grain"]
                 data = request.get_json()
+                g_id = data["g_id"]
                 type_id = data["type_id"]
-                employee_id = data["emp_id"]
-                emp_status = data["emp_status"]
 
-                if type_id and employee_id and emp_status:
+                if g_id and type_id:
+                    find_details = db1.find_one(
+                        {"_id": ObjectId(g_id), "status": {"$ne": "delete"}, "type_id": type_id})
 
-                    current_status = db1.find_one({"type_id": type_id, "_id": ObjectId(employee_id)}, {"status": 1})
+                    if find_details:
+                        find_details["_id"] = str(find_details["_id"])
+                        response = {"status": "success", "data": find_details, "message": "Grain details fetched "
+                                                                                          "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class GStatusChange(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                data = request.get_json()
+                g_status = data["g_status"].lower()
+                gs_id = data["gs_id"]
+                type_id = data["type_id"]
+
+                if g_status and gs_id and type_id:
+
+                    current_status = db1.find_one({"_id": ObjectId(gs_id), "type_id": type_id, }, {"status": 1})
 
                     if current_status is None:
                         response = {"status": 'val_error', "message": {"DB": ["Data not found"]}}
@@ -241,40 +384,36 @@ class EmployeeStatusChange(MethodView):
                         return make_response(jsonify(response)), 400
 
                     if current_status["status"] == "delete":
-                        response = {"status": 'val_error',
-                                    "message": {"Employee": ["Employee not found"]}}
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
-                    if current_status["status"] == emp_status:
-                        response = {"status": 'val_error',
-                                    "message": {"Employee": [f"Employee is already {emp_status}"]}}
+                    if current_status["status"] == g_status:
+                        response = {"status": 'val_error', "message": {"Details": [f"Grain is already {g_status}"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
                     else:
                         update_status = db1.update_one(
-                            {"type_id": type_id, "_id": ObjectId(employee_id), "status": {"$ne": "delete"}},
-                            {"$set": {"status": emp_status,
+                            {"_id": ObjectId(gs_id), "type_id": type_id, "status": {"$ne": "delete"}},
+                            {"$set": {"status": g_status,
                                       "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
 
                         if update_status.acknowledged and update_status.modified_count == 1:
-                            response = {"status": "success", "message": f"Employee {emp_status} successfully"}
+                            response = {"status": "success", "message": f"Grain {g_status} successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
-
                         else:
-                            response = {"status": "error", "message": "Employee not updated"}
+                            response = {"status": "error", "message": "Grain not updated"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
-
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -286,113 +425,70 @@ class EmployeeStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
-class AdminAssign(MethodView):
+class AssignGrain(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
             start_and_check_mongo()
             db = database_connect_mongo()
             if db is not None:
-                db1 = db["employee_registration"]
+                db1 = db["grain"]
                 db2 = db["location"]
+                db3 = db["grain_assign"]
                 data = request.get_json()
-                employee_id = data["emp_id"]
-                location_id = data["loc_id"]
+                g_id = data["g_id"]
+                loc_id = data["loc_id"]
 
-                if employee_id and location_id:
+                if g_id and loc_id:
 
-                    employee = db1.find_one({"_id": ObjectId(employee_id), "status": "active", "type_id": "admin"})
+                    find_grain = db1.find_one({"_id": ObjectId(g_id), "status": "active"})
+                    grain_name = find_grain["grain"]
 
-                    location = db2.find_one({"_id": ObjectId(location_id), "status": "active", "type_id": "country"})
+                    find_location = db2.find_one({"_id": ObjectId(loc_id), "status": "active"})
+                    location_name = find_location["location"]
 
-                    if employee is None:
-                        response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
+                    if find_grain and find_location:
 
-                    if location is None:
-                        response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
+                        grain_assign = db3.find_one(
+                            {"grain": grain_name, "country": location_name, "status": {"$ne": "delete"}})
 
-                    else:
-                        employee_name = employee.get("employee_name", None)
-                        employee_assign = employee.get("assign", None)
-                        employee_type = employee.get("type_id", None)
-                        location_name = location.get("location", None)
-                        location_assign = location.get("assign", None)
-                        location_type = location.get("type_id", None)
+                        if grain_assign is not None:
 
-                        if employee_type != "admin" or location_type != "country":
-                            response = {"status": 'val_error', "message": {"Details": ["Only admin assign to country"]}}
+                            response = {"status": 'val_error', "message": {"Details": ["Grain already assigned"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
-
-                        if employee_assign == "true":
-                            location = employee["location"]
-                            response = {"status": 'val_error', "message": {"Employee": [f"{employee_name} is already "
-                                                                                        f"assign to {location}"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
-                        if location_assign == "true":
-                            employee = location["employee"]
-                            response = {"status": 'val_error', "message": {"Country": [f"{location_name} is already "
-                                                                                       f"assign with {employee}"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
 
                         else:
-                            # Start the transaction
-                            with db.client.start_session() as session:
-                                with session.start_transaction():
-                                    try:
-                                        update_status_employee = db1.update_one({"_id": ObjectId(employee_id)},
-                                                                                {"$set": {"location": location_name,
-                                                                                          "loc_id": location_id,
-                                                                                          "updated_at": dt.datetime.now().strftime(
-                                                                                              "%Y-%m-%d %H:%M:%S"),
-                                                                                          "loc_assign": "true"}},
-                                                                                session=session)
 
-                                        update_status_location = db2.update_one({"_id": ObjectId(location_id)},
-                                                                                {"$set": {"employee": employee_name,
-                                                                                          "emp_id": employee_id,
-                                                                                          "updated_at": dt.datetime.now().strftime(
-                                                                                              "%Y-%m-%d %H:%M:%S"),
-                                                                                          "empassign": "true"}},
+                            update_status = db3.insert_one(
+                                {"grain": grain_name, "country": location_name, "status": "active",
+                                 "type_id": "grain_assign", "g_id": g_id, "loc_id": loc_id,
+                                 "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
-                                                                                session=session)
+                            if update_status.acknowledged and update_status.modified_count == 1:
+                                response = {"status": "success",
+                                            "message": f"{grain_name} assigned to {location_name} successfully"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 200
 
-                                        if update_status_employee.acknowledged and update_status_employee.modified_count == 1 and \
-                                                update_status_location.acknowledged and update_status_location.modified_count == 1:
-                                            session.commit_transaction()
-                                            response = {"status": "success",
-                                                        "message": f"{employee_name} assign to {location_name} successfully"}
-                                            stop_and_check_mongo_status(conn)
-                                            return make_response(jsonify(response)), 200
+                            else:
+                                response = {"status": "error", "message": "Grain not assigned"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 400
 
-                                        else:
-                                            session.abort_transaction()
-                                            response = {"status": "val_error",
-                                                        "message": {
-                                                            "details": ["Failed to assign employee to location"]}}
-                                            stop_and_check_mongo_status(conn)
-                                            return make_response(jsonify(response)), 400
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain or location not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
-                                    except PyMongoError as e:
-                                        session.abort_transaction()
-                                        response = {"status": 'val_error', "message": f'{str(e)}'}
-                                        stop_and_check_mongo_status(conn)
-                                        return make_response(jsonify(response)), 400
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -401,116 +497,42 @@ class AdminAssign(MethodView):
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)),
+            return make_response(jsonify(response)), 400
 
 
-class SubAdminAssign(MethodView):
+class FetchSpecificGrain(MethodView):
+
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
             start_and_check_mongo()
             db = database_connect_mongo()
             if db is not None:
-                db1 = db["employee_registration"]
-                db2 = db["location"]
+                db1 = db["grain_assign"]
                 data = request.get_json()
-                employee_id = data["emp_id"]
                 c_id = data["c_id"]
-                r_id = data["r_id"]
 
-                if employee_id and c_id and r_id:
+                if c_id:
+                    find_grain = db1.find({"loc_id": c_id, "status": "active", "type_id": "grain_assign"},
+                                          {"grain": 1, "status": 1}).sort("grain", 1)
+                    grain_list = list(find_grain)
+                    total_grain = len(grain_list)
 
-                    employee = db1.find_one({"_id": ObjectId(employee_id), "status": "active", "type_id": "sub_admin"})
+                    if total_grain > 0:
 
-                    location = db2.find_one(
-                        {"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
+                        for i in grain_list:
+                            i["_id"] = str(i["_id"])
 
-                    if employee is None:
-                        response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
+                        response = {"status": "success", "data": grain_list,
+                                    "total_grain": total_grain, "message": "Grains "
+                                                                           "fetched "
+                                                                           "successfully"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                    if location is None:
-                        response = {"status": 'val_error', "message": {"Details": ["Region not found"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
+                        return make_response(jsonify(response)), 200
                     else:
-                        employee_name = employee.get("employee_name", None)
-                        employee_assign = employee.get("assign", None)
-                        employee_type = employee.get("type_id", None)
-                        location_name = location.get("location", None)
-                        location_assign = location.get("emp_assign", None)
-                        location_type = location.get("type_id", None)
-
-                        if employee_type != "sub_admin" or location_type != "region":
-                            response = {"status": 'val_error',
-                                        "message": {"Details": ["Only sub admin assign to region"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
-                        if employee_assign == "true":
-                            location = employee["location"]
-                            response = {"status": 'val_error', "message": {"Employee": [f"{employee_name} is already "
-                                                                                        f"assign to {location}"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
-                        if location_assign == "true":
-                            employee = location["employee"]
-                            response = {"status": 'val_error', "message": {"Region": [f"{location_name} is already "
-                                                                                      f"assign with {employee}"]}}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-
-                        else:
-                            with db1.client.start_session() as session:
-                                with session.start_transaction():
-                                    try:
-                                        update_status_employee = db1.update_one(
-                                            {"_id": ObjectId(employee_id)},
-                                            {"$set": {
-                                                "location": location_name,
-                                                "loc_id": r_id,
-                                                "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                                "loc_assign": True,
-                                                "last_modified_by": "system"  # Audit trail
-                                            }},
-                                            session=session
-                                        )
-
-                                        update_status_location = db2.update_one(
-                                            {"_id": ObjectId(r_id)},
-                                            {"$set": {
-                                                "employee": employee_name,
-                                                "emp_id": employee_id,
-                                                "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                                "emp_assign": True,
-                                                "privacy_policy": False,
-                                                "last_modified_by": "system"  # Audit trail
-                                            }},
-                                            session=session
-                                        )
-
-                                        if update_status_employee.acknowledged and update_status_employee.modified_count == 1 and \
-                                                update_status_location.acknowledged and update_status_location.modified_count == 1:
-                                            response = {"status": "success",
-                                                        "message": f"{employee_name} assign to {location_name} successfully"}
-                                            stop_and_check_mongo_status(conn)
-                                            return make_response(jsonify(response)), 200
-                                        else:
-                                            session.abort_transaction()
-                                            response = {"status": "val_error",
-                                                        "message": {
-                                                            "details": ["Failed to assign employee to location"]}}
-                                            stop_and_check_mongo_status(conn)
-                                            return make_response(jsonify(response)), 400
-
-                                    except PyMongoError as e:
-                                        session.abort_transaction()
-                                        response = {"status": 'val_error', "message": f'{str(e)}'}
-                                        stop_and_check_mongo_status(conn)
-                                        return make_response(jsonify(response)), 400
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
@@ -518,7 +540,7 @@ class SubAdminAssign(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -530,23 +552,7 @@ class SubAdminAssign(MethodView):
             return make_response(jsonify(response)), 400
 
 
-# class EditorAssign(MethodView):
-#     @cross_origin(supports_credentials=True)
-#     def post(self):
-#         try:
-#             start_and_check_mongo()
-#             db = database_connect_mongo()
-#             if db is not None:
-#                 db1 = db["employee_registration"]
-#                 db2 = db["location"]
-#                 db3 = db["grain_assign"]
-#                 data = request.get_json()
-#                 employee_id = data["emp_id"]
-#                 c_id = data["c_id"]
-#                 r_id = data["r_id"]
-#                 g_id = data["g_id"]
-
-class PrivacyPolicyUpdate(MethodView):
+class AssignGrainVariant(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
         try:
@@ -554,32 +560,54 @@ class PrivacyPolicyUpdate(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["location"]
+                db3 = db["grain_assign"]
                 data = request.get_json()
-                location_id = data["loc_id"]
+                c_id = data["c_id"]
+                r_id = data["r_id"]
+                g_a_id = data["g_a_id"]
+                grain_variant = data["grain_variant"]
 
-                if location_id:
+                if c_id and r_id and g_a_id:
 
-                    location = db1.find_one({"_id": ObjectId(location_id)})
+                    find_country = db1.find_one({"_id": ObjectId(c_id), "status": "active", "type_id": "country"})
+                    country_name = find_country["location"]
 
-                    if location:
-                        privacy_policy_update = db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
-                            "updated_at": dt.datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"),
-                            "privacy_policy": "true"}})
+                    find_region = db1.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
+                    region_name = find_region["location"]
 
-                        if privacy_policy_update.acknowledged and privacy_policy_update.modified_count == 1:
-                            response = {"status": "success",
-                                        "message": "Privacy policy updated successfully"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
+                    find_grain = db3.find_one({"_id": ObjectId(g_a_id), "status": "active", "type_id": "grain_assign"})
+                    grain_name = find_grain["grain"]
 
-                        else:
-                            response = {"status": 'val_error', "message": {"Details": ["Privacy policy not update"]}}
+                    if find_country and find_region and find_grain:
+
+                        grain_variant_assign = db3.find_one(
+                            {"grain": grain_name, "country": country_name, "region": region_name,
+                             "grain_variant": grain_variant, "status": {"$ne": "delete"}})
+
+                        if grain_variant_assign is not None:
+
+                            response = {"status": 'val_error',
+                                        "message": {"Details": ["Grain variant already assigned"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
+                        else:
+
+                            db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
+                                            "grain_variant": grain_variant, "status": "pending",
+                                            "approve_status": "pending",
+                                            "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
+                                            "g_a_id": g_a_id,
+                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+
+                            response = {"status": "success",
+                                        "message": f"{grain_variant} assigned to {region_name} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+
                     else:
-                        response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
+                        response = {"status": 'val_error', "message": {"Details": ["Grain or location not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -589,7 +617,7 @@ class PrivacyPolicyUpdate(MethodView):
                     return make_response(jsonify(response)), 400
 
             else:
-                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
@@ -601,18 +629,85 @@ class PrivacyPolicyUpdate(MethodView):
             return make_response(jsonify(response)), 400
 
 
-emp_reg = EmployeeRegistration.as_view('emp_reg_view')
-all_emp = AllEmployee.as_view('all_emp_view')
-emp_details = EmployeeDetails.as_view('emp_details_view')
-emp_status = EmployeeStatusChange.as_view('emp_status_view')
-admin_assign = AdminAssign.as_view('admin_assign_view')
-sub_admin_assign = SubAdminAssign.as_view('sub_admin_assign_view')
-privacy_policy = PrivacyPolicyUpdate.as_view('privacy_policy_view')
+class GrainVariantStatusChange(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain_assign"]
+                data = request.get_json()
+                g_a_status = data["g_a_status"].lower()
+                g_a_id = data["g_a_id"]
 
-employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
-employee_access.add_url_rule('/employee_access/all_employee', view_func=all_emp, methods=['POST'])
-employee_access.add_url_rule('/employee_access/employee_details', view_func=emp_details, methods=['POST'])
-employee_access.add_url_rule('/employee_access/employee_status_change', view_func=emp_status, methods=['POST'])
-employee_access.add_url_rule('/employee_access/admin_assign', view_func=admin_assign, methods=['POST'])
-employee_access.add_url_rule('/employee_access/sub_admin_assign', view_func=sub_admin_assign, methods=['POST'])
-employee_access.add_url_rule('/employee_access/privacy_policy', view_func=privacy_policy, methods=['POST'])
+                if g_a_status and g_a_id:
+
+                    current_status = db1.find_one({"_id": ObjectId(g_a_id), "status": {"$ne": "delete"}})
+
+                    if current_status is None:
+                        response = {"status": 'val_error', "message": {"DB": ["Data not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if current_status["status"] == g_a_status:
+                        response = {"status": 'val_error',
+                                    "message": {"Details": [f"Grain variant is already {g_a_status}"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    else:
+                        update_status = db1.update_one(
+                            {"_id": ObjectId(g_a_id), "status": {"$ne": "delete"}},
+                            {"$set": {"status": g_a_status,
+                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+
+                        if update_status.matched_count == 1 and update_status.modified_count == 1:
+                            response = {"status": "success", "message": f"Grain variant {g_a_status} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": "val_error", "message": "Grain variant not updated"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+grain_add_view = AddGrain.as_view('grain_add_view')
+grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
+grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
+grain_variant_fetch_view = FetchAllGrainVariant.as_view('grain_fetch_variant_view')
+g_status_change = GStatusChange.as_view('g_status')
+g_details = FetchGDetails.as_view('g_details')
+assign_grain = AssignGrain.as_view('grain_assign')
+assign_grain_variant = AssignGrainVariant.as_view('grain_assign_variant')
+specific_grain_variant_fetch = FetchSpecificGrainVariant.as_view('specific_grain_variant_fetch')
+grain_variant_status_change = GrainVariantStatusChange.as_view('grain_variant_status_change')
+specific_grain_fetch = FetchSpecificGrain.as_view('specific_grain_fetch')
+
+grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
+grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
+grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods=['POST'])
+grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])
+grain_add.add_url_rule('/grain/g_status_change', view_func=g_status_change, methods=['POST'])
+grain_add.add_url_rule('/grain/g_details', view_func=g_details, methods=['POST'])
+grain_add.add_url_rule('/grain/assign_grain', view_func=assign_grain, methods=['POST'])
+grain_add.add_url_rule('/grain/assign_grain_variant', view_func=assign_grain_variant, methods=['POST'])
+grain_add.add_url_rule('/grain/specific_grain_variant_fetch', view_func=specific_grain_variant_fetch, methods=['POST'])
+grain_add.add_url_rule('/grain/grain_variant_status_change', view_func=grain_variant_status_change, methods=['POST'])
+grain_add.add_url_rule('/grain/specific_grain_fetch', view_func=specific_grain_fetch, methods=['POST'])
