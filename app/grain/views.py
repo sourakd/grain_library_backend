@@ -280,14 +280,13 @@ class FetchSpecificGrainVariant(MethodView):
 
                 if c_id and r_id and g_a_id:
                     find_grain_variant = db1.find(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id},
+                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
+                         "type_id": "grain_variant_assign"},
                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
                     find_grain_variant_list = list(find_grain_variant)
-                    total_grain_variant = db1.count_documents(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
-                         "type_id": "grain_variant_assign"})
+                    total_grain_variant = len(find_grain_variant_list)
 
-                    if total_grain_variant != 0:
+                    if total_grain_variant > 0:
                         for i in find_grain_variant_list:
                             i["_id"] = str(i["_id"])
                         response = {"status": "success", "data": find_grain_variant_list,
@@ -443,7 +442,6 @@ class AssignGrain(MethodView):
                 if g_id and loc_id:
 
                     find_grain = db1.find_one({"_id": ObjectId(g_id), "status": "active"})
-                    print(find_grain)
                     grain_name = find_grain["grain"]
 
                     find_location = db2.find_one({"_id": ObjectId(loc_id), "status": "active"})
@@ -453,7 +451,6 @@ class AssignGrain(MethodView):
 
                         grain_assign = db3.find_one(
                             {"grain": grain_name, "country": location_name, "status": {"$ne": "delete"}})
-                        print(grain_assign)
 
                         if grain_assign is not None:
 
@@ -509,7 +506,7 @@ class FetchSpecificGrain(MethodView):
                 c_id = data["c_id"]
 
                 if c_id:
-                    find_grain = db1.find({"c_id": c_id, "status": "active", "type_id": "grain_assign"},
+                    find_grain = db1.find({"loc_id": c_id, "status": "active", "type_id": "grain_assign"},
                                           {"grain": 1, "status": 1}).sort("grain", 1)
                     grain_list = list(find_grain)
                     total_grain = len(grain_list)
