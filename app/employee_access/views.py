@@ -316,10 +316,12 @@ class AdminAssign(MethodView):
 
                     else:
                         employee_name = employee.get("employee_name", None)
-                        employee_assign = employee.get("assign", None)
+                        employee_assign = employee.get("loc_assign", None)
+                        print(employee_assign)
                         employee_type = employee.get("type_id", None)
                         location_name = location.get("location", None)
-                        location_assign = location.get("assign", None)
+                        location_assign = location.get("emp_assign", None)
+                        print(location_assign)
                         location_type = location.get("type_id", None)
 
                         if employee_type != "admin" or location_type != "country":
@@ -421,7 +423,7 @@ class SubAdminAssign(MethodView):
 
                     else:
                         employee_name = employee.get("employee_name", None)
-                        employee_assign = employee.get("assign", None)
+                        employee_assign = employee.get("loc_assign", None)
                         employee_type = employee.get("type_id", None)
                         location_name = location.get("location", None)
                         location_assign = location.get("emp_assign", None)
@@ -524,21 +526,31 @@ class PrivacyPolicyUpdate(MethodView):
                     location = db1.find_one({"_id": ObjectId(location_id)})
 
                     if location:
-                        privacy_policy_update = db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
-                            "updated_at": dt.datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"),
-                            "privacy_policy": "true"}})
+                        pp_status = location.get("privacy_policy", None)
 
-                        if privacy_policy_update.acknowledged and privacy_policy_update.modified_count == 1:
-                            response = {"status": "success",
-                                        "message": "Privacy policy updated successfully"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
-
-                        else:
-                            response = {"status": 'val_error', "message": {"Details": ["Privacy policy not update"]}}
+                        if pp_status == "true":
+                            response = {"status": 'val_error',
+                                        "message": {"Details": ["Privacy policy already accepted"]}}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
+
+                        else:
+                            privacy_policy_update = db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
+                                "updated_at": dt.datetime.now().strftime(
+                                    "%Y-%m-%d %H:%M:%S"),
+                                "privacy_policy": "true"}})
+
+                            if privacy_policy_update.acknowledged and privacy_policy_update.modified_count == 1:
+                                response = {"status": "success",
+                                            "message": "Privacy policy updated successfully"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 200
+
+                            else:
+                                response = {"status": 'val_error',
+                                            "message": {"Details": ["Privacy policy not update"]}}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 400
 
                     else:
                         response = {"status": 'val_error', "message": {"Details": ["Location not found"]}}
