@@ -399,7 +399,7 @@ class GStatusChange(MethodView):
                             {"$set": {"status": g_status,
                                       "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
 
-                        if update_status.matched_count == 1 and update_status.modified_count == 1:
+                        if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Grain {g_status} successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
@@ -460,15 +460,22 @@ class AssignGrain(MethodView):
 
                         else:
 
-                            db3.insert_one({"grain": grain_name, "country": location_name, "status": "active",
-                                            "type_id": "grain_assign", "g_id": g_id, "loc_id": loc_id,
-                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+                            update_status = db3.insert_one(
+                                {"grain": grain_name, "country": location_name, "status": "active",
+                                 "type_id": "grain_assign", "g_id": g_id, "loc_id": loc_id,
+                                 "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                 "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
-                            response = {"status": "success",
-                                        "message": f"{grain_name} assigned to {location_name} successfully"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 200
+                            if update_status.acknowledged and update_status.modified_count == 1:
+                                response = {"status": "success",
+                                            "message": f"{grain_name} assigned to {location_name} successfully"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 200
+
+                            else:
+                                response = {"status": "error", "message": "Grain not assigned"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 400
 
                     else:
                         response = {"status": 'val_error', "message": {"Details": ["Grain or location not found"]}}
