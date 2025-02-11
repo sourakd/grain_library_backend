@@ -65,7 +65,6 @@ class EmployeeRegistrationSchema(Schema):
 
     @validates_schema()
     def validate_id_no(self, data, **kwargs):
-        print("Please", data)
         if data["id_proof"] == "aadhar":
             aadhar_pattern = re.compile(r'^\d{12}$')
             if not aadhar_pattern.match(data["id_no"]):

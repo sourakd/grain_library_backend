@@ -71,6 +71,14 @@ class S3Uploader:
             return True
         return False
 
+    def check_existing_file_story(self, file_urls):
+        db = database_connect_mongo()
+        db1 = db["story"]
+        for file_url in file_urls:
+            if db1.find_one({"$and": [{'file': re.compile("^" + re.escape(file_url) + "$", re.IGNORECASE)}]}):
+                return True
+        return False
+
 
 class ProgressPercentage(object):
     def __init__(self, file, on_progress=None):
