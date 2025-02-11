@@ -76,11 +76,11 @@ class StoryUpload(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 200
                 else:
-                    response = {"message": "All fields are required"}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
             else:
-                response = {"message": "Database connection failed"}
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
