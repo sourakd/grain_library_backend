@@ -75,8 +75,8 @@ class StoryUpload(Schema):
     def validate_status(self, value):
         if not value:
             raise ValidationError('Status is required')
-        if value != "active":
-            raise ValidationError('Status must be either active')
+        if value != "pending":
+            raise ValidationError('Status must be pending')
 
 
 StoryUploadSchema = StoryUpload()
