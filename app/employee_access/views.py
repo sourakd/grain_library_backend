@@ -61,7 +61,7 @@ class EmployeeRegistration(MethodView):
                         file_url = s3_uploader.upload_file(profile_pic)
 
                         if s3_uploader.check_existing_file(file_url):
-                            response = {"message": "File already exist", "status": "val_error"}
+                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 

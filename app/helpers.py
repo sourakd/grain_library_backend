@@ -58,11 +58,12 @@ class S3Uploader:
         with io.BytesIO(file.read()) as f:
             file_name = str(random.randint(1000, 10000)) + '_' + dt.datetime.now().strftime(
                 "%Y%m%d_%H%M%S_%f") + '.' + file.filename.split('.')[-1]
+            progress_percentage = ProgressPercentage(file, on_progress)
             self.s3.upload_fileobj(f, self.s3_config.get_bucket_name(), file_name,
                                    ExtraArgs={'ContentDisposition': 'inline', 'ContentType': file.content_type},
-                                   Callback=ProgressPercentage(file, on_progress))
+                                   Callback=progress_percentage)
             file_url = f"https://{self.s3_config.get_bucket_name()}.s3.{self.s3_config.get_region_name()}.amazonaws.com/{file_name}"
-            return file_url
+            return {'file_url': file_url, 'progress': f"{progress_percentage.get_progress()}%"}
 
     def check_existing_file(self, file_url):
         db = database_connect_mongo()
@@ -74,7 +75,8 @@ class S3Uploader:
     def check_existing_file_story(self, file_urls):
         db = database_connect_mongo()
         db1 = db["story"]
-        for file_url in file_urls:
+        for file_url_dict in file_urls:
+            file_url = file_url_dict['file_url']
             if db1.find_one({"$and": [{'file': re.compile("^" + re.escape(file_url) + "$", re.IGNORECASE)}]}):
                 return True
         return False
@@ -87,11 +89,15 @@ class ProgressPercentage(object):
         self._total_size = os.fstat(file.fileno()).st_size
         self._lock = threading.Lock()
         self._on_progress = on_progress
+        self._progress = 0
 
     def __call__(self, bytes_amount):
         with self._lock:
             self._seen_so_far += bytes_amount
-            percentage = (self._seen_so_far / self._total_size) * 100
+            self._progress = (self._seen_so_far / self._total_size) * 100
             if self._on_progress:
-                self._on_progress(percentage)
-            print(f"\r{percentage:.2f}%")
+                self._on_progress(self._progress)
+            print(f"\r{self._progress:.2f}%")
+
+    def get_progress(self):
+        return self._progress

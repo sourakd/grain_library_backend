@@ -29,6 +29,12 @@ class StoryUpload(MethodView):
                 pic_two = request.files.get("pic_two")
 
                 if story and g_v_id and conserved_by and pic_one and pic_two:
+                    # Check if the story already exists
+                    existing_story = db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
+                    if existing_story:
+                        response = {"message": {"Details": ["Story already exists"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
                     data = {
                         "story": story,
@@ -59,13 +65,14 @@ class StoryUpload(MethodView):
                         file_url = [file_url1, file_url2]
 
                         if s3_uploader.check_existing_file_story(file_url):
-                            response = {"message": "File already exist", "status": "val_error"}
+                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
                         # Insert the data into the database
                         validated_data["pic_one"] = file_url1
                         validated_data["pic_two"] = file_url2
+                        validated_data["type_id"] = "story"
                         db1.insert_one(validated_data)
 
                         # Extract the _id value
