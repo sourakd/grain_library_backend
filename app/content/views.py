@@ -30,6 +30,9 @@ class StoryUpload(MethodView):
 
                 if story and g_v_id and conserved_by and pic_one and pic_two:
 
+                    status = "pending"
+                    type_id = "story"
+
                     # Check if the story already exists
                     existing_story = db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
                     if existing_story:
@@ -43,7 +46,7 @@ class StoryUpload(MethodView):
                         "conserved_by": conserved_by,
                         "pic_one": pic_one,
                         "pic_two": pic_two,
-                        "status": "active",
+                        "status": status,
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
                     }
@@ -62,8 +65,8 @@ class StoryUpload(MethodView):
                         bucket_status, total_files = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
                         try:
-                            file_url1 = s3_uploader.upload_file(pic_one)
-                            file_url2 = s3_uploader.upload_file(pic_two)
+                            file_url1 = s3_uploader.upload_file(pic_one, type_id="story", status="pending")
+                            file_url2 = s3_uploader.upload_file(pic_two, type_id="story", status="pending")
                             file_url = [file_url1, file_url2]
                         except Exception as e:
                             response = {"message": str(e), "status": "val_error"}
@@ -78,7 +81,7 @@ class StoryUpload(MethodView):
                         # Insert the data into the database
                         validated_data["pic_one"] = file_url1
                         validated_data["pic_two"] = file_url2
-                        validated_data["type_id"] = "story"
+                        validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
 
                         # Extract the _id value

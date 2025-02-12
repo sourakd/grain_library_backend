@@ -34,9 +34,10 @@ class EmployeeRegistration(MethodView):
 
                 if employee_name and email_id and phone_number and type_id and profile_pic and address and id_proof and id_no:
 
+                    status = "active"
                     # emp_schema = EmployeeRegistrationSchema()
 
-                    data = {"status": "active", "type_id": type_id,
+                    data = {"status": status, "type_id": type_id,
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "employee_name": employee_name, "email_id": email_id,
                             "address": address, "id_proof": id_proof, "id_no": id_no,
@@ -58,9 +59,9 @@ class EmployeeRegistration(MethodView):
                         s3_config = S3Config()
                         bucket_status, total_files = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
-                        file_url = s3_uploader.upload_file(profile_pic)
+                        file_url = s3_uploader.upload_file(profile_pic, type_id=type_id, status="active")
 
-                        if s3_uploader.check_existing_file(file_url):
+                        if s3_uploader.check_existing_file(file_url['file_url']):
                             response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400

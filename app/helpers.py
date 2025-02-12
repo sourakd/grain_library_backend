@@ -54,9 +54,10 @@ class S3Uploader:
         self.s3_config = s3_config
         self.s3 = self.s3_config.get_s3_client()
 
-    def upload_file(self, file, on_progress=None):
+    def upload_file(self, file, on_progress=None, type_id=None, status=None):
         with io.BytesIO(file.read()) as f:
-            file_name = str(random.randint(1000, 10000)) + '_' + dt.datetime.now().strftime(
+            folder_path = f"{type_id}/{status}/"
+            file_name = folder_path + str(random.randint(1000, 10000)) + '_' + dt.datetime.now().strftime(
                 "%Y%m%d_%H%M%S_%f") + '.' + file.filename.split('.')[-1]
             progress_percentage = ProgressPercentage(file, on_progress)
             self.s3.upload_fileobj(f, self.s3_config.get_bucket_name(), file_name,
