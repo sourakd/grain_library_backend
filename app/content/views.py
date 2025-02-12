@@ -29,6 +29,7 @@ class StoryUpload(MethodView):
                 pic_two = request.files.get("pic_two")
 
                 if story and g_v_id and conserved_by and pic_one and pic_two:
+
                     # Check if the story already exists
                     existing_story = db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
                     if existing_story:
@@ -60,14 +61,25 @@ class StoryUpload(MethodView):
                         s3_config = S3Config()
                         bucket_status, total_files = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
-                        file_url1 = s3_uploader.upload_file(pic_one)
-                        file_url2 = s3_uploader.upload_file(pic_two)
-                        file_url = [file_url1, file_url2]
-
-                        if s3_uploader.check_existing_file_story(file_url):
-                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                        try:
+                            file_url1 = s3_uploader.upload_file(pic_one)
+                            file_url2 = s3_uploader.upload_file(pic_two)
+                            file_url = [file_url1, file_url2]
+                        except Exception as e:
+                            response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
+
+                        # if s3_uploader.check_existing_file_story(file_url):
+                        #     response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                        #     stop_and_check_mongo_status(conn)
+                        #     return make_response(jsonify(response)), 400
+
+                        if request.args.get('cancel_upload'):
+                            s3_uploader.cancel_upload(file_url1['file_url'])
+                            s3_uploader.cancel_upload(file_url2['file_url'])
+                            response = {"message": "Upload cancelled successfully", "status": "success"}
+                            return make_response(jsonify(response)), 200
 
                         # Insert the data into the database
                         validated_data["pic_one"] = file_url1
