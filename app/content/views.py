@@ -70,16 +70,10 @@ class StoryUpload(MethodView):
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
 
-                        # if s3_uploader.check_existing_file_story(file_url):
-                        #     response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
-                        #     stop_and_check_mongo_status(conn)
-                        #     return make_response(jsonify(response)), 400
-
-                        if request.args.get('cancel_upload'):
-                            s3_uploader.cancel_upload(file_url1['file_url'])
-                            s3_uploader.cancel_upload(file_url2['file_url'])
-                            response = {"message": "Upload cancelled successfully", "status": "success"}
-                            return make_response(jsonify(response)), 200
+                        if s3_uploader.check_existing_file_story(file_url):
+                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
 
                         # Insert the data into the database
                         validated_data["pic_one"] = file_url1
