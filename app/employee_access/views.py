@@ -57,11 +57,11 @@ class EmployeeRegistration(MethodView):
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         s3_config = S3Config()
-                        bucket_status, total_files = s3_config.connect_to_s3()
+                        bucket_status, total_files, all_folders = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
                         file_url = s3_uploader.upload_file(profile_pic, type_id=type_id, status="active")
 
-                        if s3_uploader.check_existing_file(file_url['file_url']):
+                        if s3_uploader.check_existing_file(file_url['file_url'], type_id):
                             response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
@@ -318,11 +318,9 @@ class AdminAssign(MethodView):
                     else:
                         employee_name = employee.get("employee_name", None)
                         employee_assign = employee.get("loc_assign", None)
-                        print(employee_assign)
                         employee_type = employee.get("type_id", None)
                         location_name = location.get("location", None)
                         location_assign = location.get("emp_assign", None)
-                        print(location_assign)
                         location_type = location.get("type_id", None)
 
                         if employee_type != "admin" or location_type != "country":

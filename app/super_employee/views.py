@@ -46,7 +46,7 @@ class SuperEmployeeRegistration(MethodView):
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
                             "employee_name": employee_name, "email_id": email_id,
                             "address": address, "id_proof": id_proof, "id_no": id_no,
-                            "phone_number": phone_number, "assigned": "false",
+                            "phone_number": phone_number, "assign": "false",
                             "profile_pic": profile_pic}
 
                     # Validate the data using the schema
@@ -62,11 +62,11 @@ class SuperEmployeeRegistration(MethodView):
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         s3_config = S3Config()
-                        bucket_status, total_files = s3_config.connect_to_s3()
+                        bucket_status, total_files, all_folders = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
                         file_url = s3_uploader.upload_file(profile_pic)
 
-                        if s3_uploader.check_existing_file(file_url):
+                        if s3_uploader.check_existing_file(file_url['file_url']):
                             response = {"message": "File already exist", "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
@@ -122,7 +122,7 @@ class AddSuperLocation(MethodView):
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "password": password, "location": location, "email_id": email_id, "assigned": "false"}
+                            "password": password, "location": location, "email_id": email_id, "emp_assign": "false"}
 
                     # Validate the data using the schema
                     try:

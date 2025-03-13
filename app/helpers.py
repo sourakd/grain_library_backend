@@ -2,7 +2,6 @@ import datetime as dt
 import io
 import os
 import random
-import re
 import threading
 from functools import wraps
 
@@ -66,20 +65,31 @@ class S3Uploader:
             file_url = f"https://{self.s3_config.get_bucket_name()}.s3.{self.s3_config.get_region_name()}.amazonaws.com/{file_name}"
             return {'file_url': file_url, 'progress': f"{progress_percentage.get_progress()}%"}
 
-    def check_existing_file(self, file_url):
+    def check_existing_file(self, file_url, type_id):
         db = database_connect_mongo()
         db1 = db["employee_registration"]
-        if db1.find_one({"$and": [{'file': re.compile("^" + re.escape(file_url) + "$", re.IGNORECASE)}]}):
+        if db1.find_one({"$and": [{'profile_pic.file_url': file_url}, {"type_id": type_id}]}):
             return True
         return False
 
-    def check_existing_file_story(self, file_urls):
+    def check_existing_file_content(self, file_urls, type_id):
         db = database_connect_mongo()
-        db1 = db["story"]
+        db1 = db["content"]
         for file_url_dict in file_urls:
             file_url = file_url_dict['file_url']
-            if db1.find_one({"$and": [{'file': re.compile("^" + re.escape(file_url) + "$", re.IGNORECASE)}]}):
+            if db1.find_one({"$and": [{'pic_one.file_url': file_url}, {"type_id": type_id}]}):
                 return True
+            if db1.find_one({"$and": [{'pic_two.file_url': file_url}, {"type_id": type_id}]}):
+                return True
+        return False
+
+    def check_existing_file_story(self, file_url, type_id):
+        db = database_connect_mongo()
+        db1 = db["story"]
+        if db1.find_one({"$and": [{'pic_one.file_url': file_url}, {"type_id": type_id}]}):
+            return True
+        if db1.find_one({"$and": [{'pic_two.file_url': file_url}, {"type_id": type_id}]}):
+            return True
         return False
 
 

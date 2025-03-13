@@ -54,6 +54,21 @@ class S3Config:
         except Exception as e:
             return f"Error accessing bucket: {str(e)}"
 
+    def get_total_files(self):
+        s3 = self.get_s3_client()
+        if s3 is None:
+            return "Error: Unable to create S3 client."
+        try:
+            response = s3.list_objects_v2(Bucket=self.bucket_name)
+            return response['KeyCount']
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return "Bucket not found."
+            else:
+                return f"Error listing objects: {str(e)}"
+        except Exception as e:
+            return f"Error listing objects: {str(e)}"
+
     def get_total_files_in_all_folders(self):
         s3 = self.get_s3_client()
         if s3 is None:
@@ -78,10 +93,12 @@ class S3Config:
     def connect_to_s3(self):
         print(f"Connecting to S3 bucket {self.bucket_name}...")
         bucket_status = self.get_bucket_status()
-        total_files = self.get_total_files_in_all_folders()
+        total_files = self.get_total_files()
+        all_folders = self.get_total_files_in_all_folders()
         print(f"S3 bucket status: {bucket_status}")
         print(f"Total files in S3 bucket: {total_files}")
-        return bucket_status, total_files
+        print(f"Total files in all folders: {all_folders}")
+        return bucket_status, total_files, all_folders
 
 
 class DevelopmentConfig(Config):
