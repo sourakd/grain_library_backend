@@ -141,7 +141,7 @@ class PreHarvestMorphologyUpload(MethodView):
                     status = "pending"
                     type_id = "pre_harvest_morphology"
 
-                    # Check if the story already exists
+                    # Check if the pre harvest morphology already exists
                     existing_pre_harvest_morphology = db1.find_one(
                         {"type_id": "pre_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
                     if existing_pre_harvest_morphology:
@@ -190,7 +190,8 @@ class PreHarvestMorphologyUpload(MethodView):
                             response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
-                        if s3_uploader.check_existing_file_story(file_url):
+
+                        if s3_uploader.check_existing_file_content(file_url, type_id):
                             response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
@@ -255,7 +256,7 @@ class PostHarvestMorphologyUpload(MethodView):
                     status = "pending"
                     type_id = "post_harvest_morphology"
 
-                    # Check if the story already exists
+                    # Check if the post harvest morphology already exists
                     existing_post_harvest_morphology = db1.find_one(
                         {"type_id": "post_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
                     if existing_post_harvest_morphology:
@@ -358,6 +359,18 @@ class EcoRegionUpload(MethodView):
                 if eco_region_img and eco_region_link and g_v_id:
                     status = "pending"
                     type_id = "eco_region"
+
+                    # Check if the eco-region already exists
+                    existing_eco_region = db1.find_one(
+                        {"type_id": "eco_region", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
+                    if existing_eco_region:
+                        response = {"message": {"Details": ["Eco Region already exists"]},
+                                    "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    # Prepare the data to be inserted into the database
+                    eco_region_img_url = ""
                     data = {
                         "eco_region_img": eco_region_img,
                         "eco_region_link": eco_region_link,
@@ -439,6 +452,18 @@ class CulinaryUpload(MethodView):
                 if g_v_id and about and recipe and pic_one and pic_two:
                     status = "pending"
                     type_id = "culinary"
+                    # Check if the culinary already exists
+                    existing_culinary = db1.find_one(
+                        {"type_id": "culinary", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
+                    if existing_culinary:
+                        response = {"message": {"Details": ["Culinary already exists"]},
+                                    "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    # Prepare the data to be inserted into the database
+                    pic_one_url = ""
+                    pic_two_url = ""
                     data = {
                         "g_v_id": g_v_id,
                         "about": about,
@@ -522,7 +547,7 @@ class AgronomyUpload(MethodView):
                 g_v_id = data["g_v_id"]
                 seedbed_preparation = data["seedbed_preparation"]
                 seed_broadcast = data["seed_broadcast"]
-                field_preparation_weeding = data["field_preparation"]
+                field_preparation_weeding = data["field_preparation_weeding"]
                 transplantation = data["transplantation"]
                 tillering_starts = data["tillering_starts"]
                 weeding_phase_two = data["weeding_phase_two"]
@@ -532,11 +557,25 @@ class AgronomyUpload(MethodView):
                 if g_v_id and seedbed_preparation and seed_broadcast and field_preparation_weeding and transplantation and tillering_starts and weeding_phase_two and flowering and harvest:
                     status = "pending"
                     type_id = "agronomy"
+                    # Check if the agronomy already exists
+                    existing_agronomy = db1.find_one(
+                        {"type_id": "agronomy", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
+                    if existing_agronomy:
+                        response = {"message": {"Details": ["Agronomy already exists"]},
+                                    "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    # Prepare the data to be inserted into the database
+                    # validated_data = {}
+                    # for key, value in data.items():
+                    #     if value is not None:
+                    #         validated_data[key] = value
                     data = {
                         "g_v_id": g_v_id,
                         "seedbed_preparation": seedbed_preparation,
                         "seed_broadcast": seed_broadcast,
-                        "field_preparation": field_preparation_weeding,
+                        "field_preparation_weeding": field_preparation_weeding,
                         "transplantation": transplantation,
                         "tillering_starts": tillering_starts,
                         "weeding_phase_two": weeding_phase_two,

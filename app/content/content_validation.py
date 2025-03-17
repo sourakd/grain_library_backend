@@ -605,10 +605,10 @@ class AgronomyUpload(Schema):
         if not value:
             raise ValidationError('Transplantation is required')
 
-    @validates('tilling_starts')
-    def validate_tiling_starts(self, value):
+    @validates('tillering_starts')
+    def validate_tillering_starts(self, value):
         if not value:
-            raise ValidationError('Tilling starts is required')
+            raise ValidationError('Tillering starts is required')
 
     @validates('weeding_phase_two')
     def validate_weeding_phase_two(self, value):
