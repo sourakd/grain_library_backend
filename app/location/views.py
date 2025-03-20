@@ -261,10 +261,35 @@ class FetchRegion(MethodView):
                 db1 = db["location"]
                 data = request.get_json()
                 country = data["country"]
+                emp_assign = data["emp_assign"]
 
-                if country:
-                    find_region = db1.find({"status": "active", "type_id": "region", "country": country},
-                                           {"location": 1})
+                if country and emp_assign:
+                    find_region = db1.find(
+                        {"status": "active", "type_id": "region", "country": country, "emp_assign": emp_assign},
+                        {"location": 1})
+                    find_region_list = list(find_region)
+                    total_region = db1.count_documents(
+                        {"status": "active", "type_id": "region", "country": country, "emp_assign": emp_assign})
+
+                    if total_region != 0:
+                        for i in find_region_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_region_list,
+                                    "total_region": total_region, "message": "all region "
+                                                                             "fetched "
+                                                                             "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                    else:
+                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name1"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                if country and emp_assign is None or emp_assign == "":
+                    find_region = db1.find(
+                        {"status": "active", "type_id": "region", "country": country},
+                        {"location": 1})
                     find_region_list = list(find_region)
                     total_region = db1.count_documents(
                         {"status": "active", "type_id": "region", "country": country})
@@ -280,7 +305,7 @@ class FetchRegion(MethodView):
                         return make_response(jsonify(response)), 200
 
                     else:
-                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name"]}}
+                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name2"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -311,22 +336,52 @@ class FetchCountry(MethodView):
             if db is not None:
                 db1 = db["location"]
                 data = request.get_json()
-                type_id = data["type_id"]
-                find_location = db1.find({"status": "active", "type_id": type_id}, {"location": 1})
-                find_location_list = list(find_location)
-                total_location = db1.count_documents({"status": "active", "type_id": type_id})
+                emp_assign = data["emp_assign"]
 
-                if total_location != 0:
-                    for i in find_location_list:
-                        i["_id"] = str(i["_id"])
-                    response = {"status": "success", "data": find_location_list, "total_country": total_location,
-                                "message": "Location "
-                                           "fetched "
-                                           "successfully"}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                if emp_assign:
+                    find_location = db1.find({"status": "active", "type_id": "country", "emp_assign": emp_assign},
+                                             {"location": 1})
+                    find_location_list = list(find_location)
+                    total_location = db1.count_documents(
+                        {"status": "active", "type_id": "country", "emp_assign": emp_assign})
+
+                    if total_location != 0:
+                        for i in find_location_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_location_list, "total_country": total_location,
+                                    "message": "Location "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"country": ["Please add a location first1"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                if emp_assign is None or emp_assign == "":
+                    find_location = db1.find({"status": "active", "type_id": "country"},
+                                             {"location": 1})
+                    find_location_list = list(find_location)
+                    total_location = db1.count_documents(
+                        {"status": "active", "type_id": "country"})
+
+                    if total_location != 0:
+                        for i in find_location_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_location_list, "total_country": total_location,
+                                    "message": "Location "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"country": ["Please add a location first2"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                 else:
-                    response = {"status": 'val_error', "message": {"country": ["Please add a location first"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 

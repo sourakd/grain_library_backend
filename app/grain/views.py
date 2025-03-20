@@ -1,4 +1,5 @@
 import datetime as dt
+from itertools import groupby
 
 from bson import ObjectId
 from flask import Blueprint, make_response, jsonify, request
@@ -328,6 +329,7 @@ class FetchAllGrainAndVariant(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["grain_assign"]
+                db2 = db["content"]
                 data = request.get_json()
                 c_id = data["c_id"]
                 r_id = data["r_id"]
@@ -337,13 +339,41 @@ class FetchAllGrainAndVariant(MethodView):
                         {"status": "active", "c_id": c_id, "r_id": r_id,
                          "type_id": "grain_variant_assign"},
                         {"grain": 1, "grain_variant": 1, "status": 1}).sort("grain", 1)
+
                     find_grain_variant_list = list(find_grain_variant)
                     total_grain_variant = len(find_grain_variant_list)
 
                     if total_grain_variant > 0:
                         for i in find_grain_variant_list:
                             i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_grain_variant_list,
+
+                        a = []
+
+                        for i in find_grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                            e = list(db2.find({"g_v_id": i["_id"]}))
+                            for j in e:
+                                type_id = j["type_id"]
+                                status = j["status"]
+                                g_v_id = j["g_v_id"]
+                                a.append({"type_id": type_id, "status": status, "_id": g_v_id})
+                        a.sort(key=lambda x: x['_id'])
+                        result = [{'_id': k, 'approval': [{'type_id': x['type_id'], 'status': x['status']} for x in v]}
+                                  for
+                                  k, v in groupby(a, key=lambda x: x['_id'])]
+
+                        # Create a dictionary to map _id values to documents in list1
+                        id_map = {doc['_id']: doc for doc in find_grain_variant_list}
+
+                        # Iterate over list2 and append approval field to corresponding document in list1
+                        for doc in result:
+                            if doc['_id'] in id_map:
+                                id_map[doc['_id']]['approval'] = doc['approval']
+
+                        # Convert the dictionary back to a list
+                        result = list(id_map.values())
+
+                        response = {"status": "success", "data": result,
                                     "total_grain_variant": total_grain_variant, "message": "Data "
                                                                                            "fetched "
                                                                                            "successfully"}
@@ -735,6 +765,56 @@ class GrainVariantStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
+class FetchAllGrainVariantBaseOnRegion(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain_assign"]
+                data = request.get_json()
+                r_id = data["r_id"]
+
+                if r_id:
+                    find_all_grain_variant = db1.find(
+                        {"r_id": r_id, "status": "active", "type_id": "grain_variant_assign"}).sort(
+                        "grain_variant", 1)
+                    grain_variant_list = list(find_all_grain_variant)
+                    total_grain_variant = len(grain_variant_list)
+                    if total_grain_variant != 0:
+                        for i in grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": grain_variant_list,
+                                    "total_grain_variant": total_grain_variant,
+                                    "message": "Employee "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": "val_error", "message": "No grain variant found"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 404
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter region"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
 grain_add_view = AddGrain.as_view('grain_add_view')
 grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
 grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
@@ -747,6 +827,8 @@ specific_grain_variant_fetch = FetchSpecificGrainVariant.as_view('specific_grain
 grain_variant_status_change = GrainVariantStatusChange.as_view('grain_variant_status_change')
 specific_grain_fetch = FetchSpecificGrain.as_view('specific_grain_fetch')
 fetch_all_grain_and_variant = FetchAllGrainAndVariant.as_view('fetch_all_grain_variant')
+fetch_all_grain_variant_base_on_region = FetchAllGrainVariantBaseOnRegion.as_view(
+    'fetch_all_grain_variant_base_on_region')
 
 grain_add.add_url_rule('/grain/add_grain', view_func=grain_add_view, methods=['POST'])
 grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_view, methods=['POST'])
@@ -760,3 +842,5 @@ grain_add.add_url_rule('/grain/specific_grain_variant_fetch', view_func=specific
 grain_add.add_url_rule('/grain/grain_variant_status_change', view_func=grain_variant_status_change, methods=['POST'])
 grain_add.add_url_rule('/grain/specific_grain_fetch', view_func=specific_grain_fetch, methods=['POST'])
 grain_add.add_url_rule('/grain/fetch_all_grain_and_variant', view_func=fetch_all_grain_and_variant, methods=['POST'])
+grain_add.add_url_rule('/grain/fetch_all_grain_variant_base_on_region',
+                       view_func=fetch_all_grain_variant_base_on_region, methods=['POST'])

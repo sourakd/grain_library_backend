@@ -238,21 +238,23 @@ class PostHarvestMorphologyUpload(MethodView):
                 db1 = db["content"]
                 data = dict(request.form)
                 g_v_id = data["g_v_id"].lower()
-                plant_height = data["plant_height"].lower()
-                aroma = data["aroma"].lower()
-                culm_internode_colour = data["culm_internode_colour"].lower()
-                leaf_blade_colour = data["leaf_blade_colour"].lower()
-                leaf_blade_pubescence = data["leaf_blade_pubescence"].lower()
-                flag_leaf_angle = data["flag_leaf_angle"].lower()
-                flag_leaf_length = data["flag_leaf_length"].lower()
-                flag_leaf_width = data["flag_leaf_width"].lower()
-                ligule_shape = data["ligule_shape"].lower()
-                ligule_colour = data["ligule_colour"].lower()
+                panicle_length = data["panicle_length"].lower()
+                panicle_threshability = data["panicle_threshability"].lower()
+                panicle_type = data["panicle_type"].lower()
+                awning_length = data["awning_length"].lower()
+                awning_colour = data["awning_colour"].lower()
+                grain_weight = data["grain_weight"].lower()
+                lemma_palea_colour = data["lemma_palea_colour"].lower()
+                lemma_palea_hair = data["lemma_palea_hair"].lower()
+                grain_length = data["grain_length"].lower()
+                grain_width = data["grain_width"].lower()
+                kernel_colour = data["kernel_colour"].lower()
+                kernel_length = data["kernel_length"].lower()
+                kernel_width = data["kernel_width"].lower()
                 pic_one = request.files.get("pic_one")
                 pic_two = request.files.get("pic_two")
 
-                if g_v_id and plant_height and aroma and culm_internode_colour and leaf_blade_colour and leaf_blade_pubescence and flag_leaf_angle and flag_leaf_length and flag_leaf_width and ligule_shape and ligule_colour and pic_one and pic_two:
-
+                if g_v_id and panicle_length and panicle_threshability and panicle_type and awning_length and awning_colour and grain_weight and lemma_palea_colour and lemma_palea_hair and grain_length and grain_width and kernel_colour and kernel_length and kernel_width and pic_one and pic_two:
                     status = "pending"
                     type_id = "post_harvest_morphology"
 
@@ -266,16 +268,19 @@ class PostHarvestMorphologyUpload(MethodView):
                         return make_response(jsonify(response)), 400
                     data = {
                         "g_v_id": g_v_id,
-                        "plant_height": plant_height,
-                        "aroma": aroma,
-                        "culm_internode_colour": culm_internode_colour,
-                        "leaf_blade_colour": leaf_blade_colour,
-                        "leaf_blade_pubescence": leaf_blade_pubescence,
-                        "flag_leaf_angle": flag_leaf_angle,
-                        "flag_leaf_length": flag_leaf_length,
-                        "flag_leaf_width": flag_leaf_width,
-                        "ligule_shape": ligule_shape,
-                        "ligule_colour": ligule_colour,
+                        "panicle_length": panicle_length,
+                        "panicle_threshability": panicle_threshability,
+                        "panicle_type": panicle_type,
+                        "awning_length": awning_length,
+                        "awning_colour": awning_colour,
+                        "grain_weight": grain_weight,
+                        "lemma_palea_colour": lemma_palea_colour,
+                        "lemma_palea_hair": lemma_palea_hair,
+                        "grain_length": grain_length,
+                        "grain_width": grain_width,
+                        "kernel_colour": kernel_colour,
+                        "kernel_length": kernel_length,
+                        "kernel_width": kernel_width,
                         "pic_one": pic_one,
                         "pic_two": pic_two,
                         "status": status,
@@ -305,7 +310,8 @@ class PostHarvestMorphologyUpload(MethodView):
                             response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
-                        if s3_uploader.check_existing_file_story(file_url):
+
+                        if s3_uploader.check_existing_file_story(file_url, type_id):
                             response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
@@ -594,7 +600,7 @@ class AgronomyUpload(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-
+                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
                         # Extract the _id value

@@ -122,9 +122,7 @@ class AllEmployee(MethodView):
                         for i in find_employee_list:
                             i["_id"] = str(i["_id"])
                         response = {"status": "success", "data": find_employee_list, "total_employee": total_employee,
-                                    "message": "Employee "
-                                               "fetched "
-                                               "successfully"}
+                                    "message": "Employee fetched successfully"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 200
                     else:
@@ -133,7 +131,6 @@ class AllEmployee(MethodView):
                         return make_response(jsonify(response)), 400
 
                 if type_id and assign:
-                    print("Please")
                     find_employee = db1.find({"status": {"$ne": "delete"}, "type_id": type_id, "loc_assign": assign},
                                              {"password": 0}).sort(
                         "status", 1)
@@ -157,6 +154,115 @@ class AllEmployee(MethodView):
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter type ID"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class EmployeeBasedOnLocation(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["employee_registration"]
+                db2 = db["location"]
+                data = request.get_json()
+                country = data["c_id"]
+                region = data["r_id"]
+                type_id = data["type_id"]
+
+                if country and type_id and region is None or region == "":
+                    if type_id == "admin":
+                        find_employee = db1.find_one(
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country},
+                            {"password": 0})
+                        total_employee = db1.count_documents(
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country})
+                        if total_employee != 0:
+                            find_employee["_id"] = str(find_employee["_id"])
+                            response = {"status": "success", "data": find_employee,
+                                        "total_employee": total_employee,
+                                        "message": "Employee "
+                                                   "fetched "
+                                                   "successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": 'val_error',
+                                        "message": {"Employee": ["Please add an employee first 1"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                    if type_id == "region":
+                        employee_list = []
+                        find_employee = db2.find({"status": {"$ne": "delete"}, "type_id": type_id, "c_id": country},
+                                                 {"emp_id": 1})
+                        find_employee_list = list(find_employee)
+                        total_employee = db2.count_documents(
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "c_id": country})
+                        if total_employee != 0:
+                            for i in find_employee_list:
+                                emp_id = i["emp_id"]
+                                find_employee = db1.find_one(
+                                    {"status": {"$ne": "delete"}, "type_id": "sub_admin", "_id": ObjectId(emp_id)},
+                                    {"password": 0})
+                                find_employee["_id"] = str(find_employee["_id"])
+                                employee_list.append(find_employee)
+
+                            response = {"status": "success", "data": employee_list,
+                                        "total_employee": total_employee,
+                                        "message": "Employee "
+                                                   "fetched "
+                                                   "successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": 'val_error',
+                                        "message": {"Employee": ["Please add an employee first 2"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+                    else:
+                        response = {"status": 'val_error', "message": {"Details": ["Please enter type ID"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                if region and type_id and country is None or country == "":
+                    find_employee = db1.find(
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region},
+                        {"password": 0}).sort("employee_name", 1)
+                    find_employee_list = list(find_employee)
+                    total_employee = db1.count_documents(
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region})
+                    if total_employee != 0:
+                        for i in find_employee_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_employee_list,
+                                    "total_employee": total_employee,
+                                    "message": "Employee "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": 'val_error', "message": {"Employee": ["Please add an employee first 3"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 
@@ -493,21 +599,87 @@ class SubAdminAssign(MethodView):
             return make_response(jsonify(response)), 400
 
 
-# class EditorAssign(MethodView):
-#     @cross_origin(supports_credentials=True)
-#     def post(self):
-#         try:
-#             start_and_check_mongo()
-#             db = database_connect_mongo()
-#             if db is not None:
-#                 db1 = db["employee_registration"]
-#                 db2 = db["location"]
-#                 db3 = db["grain_assign"]
-#                 data = request.get_json()
-#                 employee_id = data["emp_id"]
-#                 c_id = data["c_id"]
-#                 r_id = data["r_id"]
-#                 g_id = data["g_id"]
+class EditorAssign(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["employee_registration"]
+                db2 = db["location"]
+                db3 = db["grain_assign"]
+                data = request.get_json()
+                employee_id = data["emp_id"]
+                g_v_id = data["g_v_id"]
+                r_id = data["r_id"]
+
+                if employee_id and g_v_id and r_id:
+
+                    editor = db1.find_one({"_id": ObjectId(employee_id), "status": "active", "type_id": "editor"})
+                    grain_variant = db3.find_one(
+                        {"_id": ObjectId(g_v_id), "status": "active", "type_id": "grain_variant_assign"})
+                    location = db2.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
+
+                    if editor["loc_assign"] == "true":
+                        response = {"status": 'val_error', "message": {"Employee": "Editor is already assign"}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if editor is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if grain_variant is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Grain variant not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if location is None:
+                        response = {"status": 'val_error', "message": {"Details": ["Region not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    else:
+                        editor_update = db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {
+                            "updated_at": dt.datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S"),
+                            "loc_id": r_id, "loc_assign": "true", "g_v_id": g_v_id}})
+
+                        grain_variant_update = db3.update_one({"_id": ObjectId(g_v_id)}, {"$set": {
+                            "updated_at": dt.datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S"),
+                            "editor_id": employee_id}})
+                        if editor_update.acknowledged and editor_update.modified_count == 1 and \
+                                grain_variant_update.acknowledged and grain_variant_update.modified_count == 1:
+                            response = {"status": "success",
+                                        "message": "Editor assign to region and grain variant successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": "val_error",
+                                        "message": "Failed to assign editor to region and grain variant"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"DB": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
 
 class PrivacyPolicyUpdate(MethodView):
     @cross_origin(supports_credentials=True)
@@ -581,6 +753,8 @@ emp_status = EmployeeStatusChange.as_view('emp_status_view')
 admin_assign = AdminAssign.as_view('admin_assign_view')
 sub_admin_assign = SubAdminAssign.as_view('sub_admin_assign_view')
 privacy_policy = PrivacyPolicyUpdate.as_view('privacy_policy_view')
+emp_details_loc = EmployeeBasedOnLocation.as_view('emp_details_loc_view')
+editor_assign = EditorAssign.as_view('editor_assign_view')
 
 employee_access.add_url_rule('/employee_access/registration', view_func=emp_reg, methods=['POST'])
 employee_access.add_url_rule('/employee_access/all_employee', view_func=all_emp, methods=['POST'])
@@ -589,3 +763,5 @@ employee_access.add_url_rule('/employee_access/employee_status_change', view_fun
 employee_access.add_url_rule('/employee_access/admin_assign', view_func=admin_assign, methods=['POST'])
 employee_access.add_url_rule('/employee_access/sub_admin_assign', view_func=sub_admin_assign, methods=['POST'])
 employee_access.add_url_rule('/employee_access/privacy_policy', view_func=privacy_policy, methods=['POST'])
+employee_access.add_url_rule('/employee_access/employee_details_location', view_func=emp_details_loc, methods=['POST'])
+employee_access.add_url_rule('/employee_access/editor_assign', view_func=editor_assign, methods=['POST'])

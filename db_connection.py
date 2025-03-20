@@ -13,7 +13,7 @@ db_username = ProductionConfig.db_username
 db_password = ProductionConfig.db_password
 
 apps = ["development", "production"]
-used_app = apps[0]
+used_app = apps[1]
 
 
 def get_url():

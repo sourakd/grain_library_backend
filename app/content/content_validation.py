@@ -123,8 +123,8 @@ class PreHarvestMorphologyUpload(Schema):
             raise ValidationError('Plant height is required')
         if not isinstance(value, str):
             raise ValidationError('Plant height must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Plant height must contain only numeric characters and a single dot')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Plant height must contain only numeric characters and up to 2 decimal places')
 
     @validates('aroma')
     def validate_aroma(self, value):
@@ -177,8 +177,8 @@ class PreHarvestMorphologyUpload(Schema):
             raise ValidationError('Flag leaf length is required')
         if not isinstance(value, str):
             raise ValidationError('Flag leaf length must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Flag leaf length must contain only numeric characters and a single dot')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Flag leaf length must contain only numeric characters and up to 2 decimal places')
 
     @validates('flag_leaf_width')
     def validate_flag_leaf_width(self, value):
@@ -186,8 +186,8 @@ class PreHarvestMorphologyUpload(Schema):
             raise ValidationError('Flag leaf width is required')
         if not isinstance(value, str):
             raise ValidationError('Flag leaf width must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Flag leaf width must contain only numeric characters and a single dot')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Flag leaf width must contain only numeric characters and up to 2 decimal places')
 
     @validates('ligule_shape')
     def validate_ligule_shape(self, value):
@@ -254,16 +254,19 @@ class PreHarvestMorphologyUpload(Schema):
 
 class PostHarvestMorphologyUpload(Schema):
     g_v_id = fields.Str(required=True)
-    plant_height = fields.Str(required=True)
-    aroma = fields.Str(required=True)
-    culm_internode_colour = fields.Str(required=True)
-    leaf_blade_colour = fields.Str(required=True)
-    leaf_blade_pubescence = fields.Str(required=True)
-    flag_leaf_angle = fields.Str(required=True)
-    flag_leaf_length = fields.Str(required=True)
-    flag_leaf_width = fields.Str(required=True)
-    ligule_shape = fields.Str(required=True)
-    ligule_colour = fields.Str(required=True)
+    panicle_length = fields.Str(required=True)
+    panicle_threshability = fields.Str(required=True)
+    panicle_type = fields.Str(required=True)
+    awning_length = fields.Str(required=True)
+    awning_colour = fields.Str(required=True)
+    grain_weight = fields.Str(required=True)
+    lemma_palea_colour = fields.Str(required=True)
+    lemma_palea_hair = fields.Str(required=True)
+    grain_length = fields.Str(required=True)
+    grain_width = fields.Str(required=True)
+    kernel_colour = fields.Str(required=True)
+    kernel_length = fields.Str(required=True)
+    kernel_width = fields.Str(required=True)
     pic_one = fields.Raw(required=True)
     pic_two = fields.Raw(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
@@ -281,95 +284,122 @@ class PostHarvestMorphologyUpload(Schema):
         if not find_grain_variant:
             raise ValidationError('Grain variant not found')
 
-    @validates('plant_height')
-    def validate_plant_height(self, value):
+    @validates('panicle_length')
+    def validate_panicle_length(self, value):
         if not value:
-            raise ValidationError('Plant height is required')
+            raise ValidationError('Panicle length is required')
         if not isinstance(value, str):
-            raise ValidationError('Plant height must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Plant height must contain only numeric characters and a single dot')
+            raise ValidationError('Panicle length must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Panicle length must contain only numeric characters and up to 2 decimal places')
 
-    @validates('aroma')
-    def validate_aroma(self, value):
+    @validates('panicle_threshability')
+    def validate_panicle_threshability(self, value):
         if not value:
-            raise ValidationError('Aroma is required')
+            raise ValidationError('Panicle threshability is required')
         if not isinstance(value, str):
-            raise ValidationError('Aroma must be a string')
+            raise ValidationError('Panicle threshability must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Aroma must contain only alphabets and spaces')
+            raise ValidationError('Panicle threshability must contain only alphabets and spaces')
 
-    @validates('culm_internode_colour')
-    def validate_culm_internode_colour(self, value):
+    @validates('panicle_type')
+    def validate_panicle_type(self, value):
         if not value:
-            raise ValidationError('Culm internode colour is required')
+            raise ValidationError('Panicle type is required')
         if not isinstance(value, str):
-            raise ValidationError('Culm internode colour must be a string')
+            raise ValidationError('Panicle type must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Culm internode colour must contain only alphabets and spaces')
+            raise ValidationError('Panicle type must contain only alphabets and spaces')
 
-    @validates('leaf_blade_colour')
-    def validate_leaf_blade_colour(self, value):
+    @validates('awning_length')
+    def validate_awning_length(self, value):
         if not value:
-            raise ValidationError('Leaf blade colour is required')
+            raise ValidationError('Awning length is required')
         if not isinstance(value, str):
-            raise ValidationError('Leaf blade colour must be a string')
+            raise ValidationError('Awning length must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Awning length must contain only numeric characters and up to 2 decimal places')
+
+    @validates('awning_colour')
+    def validate_awning_colour(self, value):
+        if not value:
+            raise ValidationError('Awning colour is required')
+        if not isinstance(value, str):
+            raise ValidationError('Awning colour must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Leaf blade colour must contain only alphabets and spaces')
+            raise ValidationError('Awning colour must contain only alphabets and spaces')
 
-    @validates('leaf_blade_pubescence')
-    def validate_leaf_blade_pubescence(self, value):
+    @validates('grain_weight')
+    def validate_grain_weight(self, value):
         if not value:
-            raise ValidationError('Leaf blade pubescence is required')
+            raise ValidationError('Grain weight is required')
         if not isinstance(value, str):
-            raise ValidationError('Leaf blade pubescence must be a string')
+            raise ValidationError('Grain weight must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Grain weight must contain only numeric characters and up to 2 decimal places')
+
+    @validates('lemma_palea_colour')
+    def validate_lemma_palea_colour(self, value):
+        if not value:
+            raise ValidationError('Lemma palea colour is required')
+        if not isinstance(value, str):
+            raise ValidationError('Lemma palea colour must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Leaf blade pubescence must contain only alphabets and spaces')
+            raise ValidationError('Lemma palea colour must contain only alphabets and spaces')
 
-    @validates('flag_leaf_angle')
-    def validate_flag_leaf_angle(self, value):
+    @validates('lemma_palea_hair')
+    def validate_lemma_palea_hair(self, value):
         if not value:
-            raise ValidationError('Flag leaf angle is required')
+            raise ValidationError('Lemma palea hair is required')
         if not isinstance(value, str):
-            raise ValidationError('Flag leaf angle must be a string')
+            raise ValidationError('Lemma palea hair must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Flag leaf angle must contain only alphabets and spaces')
+            raise ValidationError('Lemma palea hair must contain only alphabets and spaces')
 
-    @validates('flag_leaf_length')
-    def validate_flag_leaf_length(self, value):
+    @validates('grain_length')
+    def validate_grain_length(self, value):
         if not value:
-            raise ValidationError('Flag leaf length is required')
+            raise ValidationError('Grain length is required')
         if not isinstance(value, str):
-            raise ValidationError('Flag leaf length must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Flag leaf length must contain only numeric characters and a single dot')
+            raise ValidationError('Grain length must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Grain length must contain only numeric characters and up to 2 decimal places')
 
-    @validates('flag_leaf_width')
-    def validate_flag_leaf_width(self, value):
+    @validates('grain_width')
+    def validate_grain_width(self, value):
         if not value:
-            raise ValidationError('Flag leaf width is required')
+            raise ValidationError('Grain width is required')
         if not isinstance(value, str):
-            raise ValidationError('Flag leaf width must be a string')
-        if not re.match(r'^\d+(?:\.\d+)?$', value):
-            raise ValidationError('Flag leaf width must contain only numeric characters and a single dot')
+            raise ValidationError('Grain width must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Grain width must contain only numeric characters and up to 2 decimal places')
 
-    @validates('ligule_shape')
-    def validate_ligule_shape(self, value):
+    @validates('kernel_colour')
+    def validate_kernel_colour(self, value):
         if not value:
-            raise ValidationError('Ligule shape is required')
+            raise ValidationError('Kernel colour is required')
         if not isinstance(value, str):
-            raise ValidationError('Ligule shape must be a string')
+            raise ValidationError('Kernel colour must be a string')
         if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Ligule shape must contain only alphabets and spaces')
+            raise ValidationError('Kernel colour must contain only alphabets and spaces')
 
-    @validates('ligule_colour')
-    def validate_ligule_colour(self, value):
+    @validates('kernel_length')
+    def validate_kernel_length(self, value):
         if not value:
-            raise ValidationError('Ligule colour is required')
+            raise ValidationError('Kernel length is required')
         if not isinstance(value, str):
-            raise ValidationError('Ligule colour must be a string')
-        if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Ligule colour must contain only alphabets and spaces')
+            raise ValidationError('Kernel length must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Kernel length must contain only numeric characters and up to 2 decimal places')
+
+    @validates('kernel_width')
+    def validate_kernel_width(self, value):
+        if not value:
+            raise ValidationError('Kernel width is required')
+        if not isinstance(value, str):
+            raise ValidationError('Kernel width must be a string')
+        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
+            raise ValidationError('Kernel width must contain only numeric characters and up to 2 decimal places')
 
     @validates('pic_one')
     def validate_pic_one(self, value):
