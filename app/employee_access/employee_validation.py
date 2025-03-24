@@ -65,19 +65,29 @@ class EmployeeRegistrationSchema(Schema):
 
     @validates_schema()
     def validate_id_no(self, data, **kwargs):
+        db = database_connect_mongo()
+        db1 = db["employee_registration"]
         if data["id_proof"] == "aadhar":
             aadhar_pattern = re.compile(r'^\d{12}$')
             if not aadhar_pattern.match(data["id_no"]):
                 raise ValidationError({"id_no": ["Please enter a valid Aadhar card number (12 characters)"]})
+            if db1.count_documents({"id_no": {"$eq": data["id_no"]}}, collation={"locale": "en", "strength": 2}) > 0:
+                raise ValidationError("Aadhar card already exists")
         elif data["id_proof"] == "voter":
             voter_pattern = re.compile(r'^[A-Z]{3}\d{7}$')
             if not voter_pattern.match(data["id_no"]):
                 raise ValidationError({"id_no": ["Please enter a valid Voter ID number (10 characters)"]})
+            if db1.count_documents({"id_no": {"$eq": data["id_no"]}}, collation={"locale": "en", "strength": 2}) > 0:
+                raise ValidationError("Voter ID already exists")
 
     @validates('phone_number')
     def validate_phone_number(self, value):
+        db = database_connect_mongo()
+        db1 = db["employee_registration"]
         if not phone_pattern.match(value):
             raise ValidationError("Please enter a valid phone number (10 digits).")
+        if db1.count_documents({"phone_number": {"$eq": value}}, collation={"locale": "en", "strength": 2}) > 0:
+            raise ValidationError("Phone number already exists")
 
 
 employee_registration_schema = EmployeeRegistrationSchema()

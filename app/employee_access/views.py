@@ -142,9 +142,7 @@ class AllEmployee(MethodView):
                         for i in find_employee_list:
                             i["_id"] = str(i["_id"])
                         response = {"status": "success", "data": find_employee_list, "total_employee": total_employee,
-                                    "message": "Employee "
-                                               "fetched "
-                                               "successfully"}
+                                    "message": "Employee fetched successfully"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 200
                     else:
@@ -187,17 +185,15 @@ class EmployeeBasedOnLocation(MethodView):
                 if country and type_id and region is None or region == "":
                     if type_id == "admin":
                         find_employee = db1.find_one(
-                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country},
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country, "loc_assign": "true"},
                             {"password": 0})
                         total_employee = db1.count_documents(
-                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country})
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": country, "loc_assign": "true"})
                         if total_employee != 0:
                             find_employee["_id"] = str(find_employee["_id"])
                             response = {"status": "success", "data": find_employee,
                                         "total_employee": total_employee,
-                                        "message": "Employee "
-                                                   "fetched "
-                                                   "successfully"}
+                                        "message": "Employee fetched successfully"}
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 200
                         else:
@@ -208,8 +204,9 @@ class EmployeeBasedOnLocation(MethodView):
 
                     if type_id == "region":
                         employee_list = []
-                        find_employee = db2.find({"status": {"$ne": "delete"}, "type_id": type_id, "c_id": country},
-                                                 {"emp_id": 1})
+                        find_employee = db2.find(
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "c_id": country, "emp_assign": "true"},
+                            {"emp_id": 1})
                         find_employee_list = list(find_employee)
                         total_employee = db2.count_documents(
                             {"status": {"$ne": "delete"}, "type_id": type_id, "c_id": country})
@@ -241,11 +238,11 @@ class EmployeeBasedOnLocation(MethodView):
 
                 if region and type_id and country is None or country == "":
                     find_employee = db1.find(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region},
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region, "loc_assign": "true"},
                         {"password": 0}).sort("employee_name", 1)
                     find_employee_list = list(find_employee)
                     total_employee = db1.count_documents(
-                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region})
+                        {"status": {"$ne": "delete"}, "type_id": type_id, "loc_id": region, "loc_assign": "true"})
                     if total_employee != 0:
                         for i in find_employee_list:
                             i["_id"] = str(i["_id"])
@@ -622,21 +619,27 @@ class EditorAssign(MethodView):
                     location = db2.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
 
                     if editor["loc_assign"] == "true":
-                        response = {"status": 'val_error', "message": {"Employee": "Editor is already assign"}}
+                        response = {"status": 'val_error', "message": {"Employee": ["Editor is already assign"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
-                    if editor is None:
+                    if grain_variant["emp_assign"] == "true":
+                        response = {"status": 'val_error',
+                                    "message": {"Grain variant": ["Grain variant is already assign"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if not editor:
                         response = {"status": 'val_error', "message": {"Details": ["Employee not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
-                    if grain_variant is None:
+                    if not grain_variant:
                         response = {"status": 'val_error', "message": {"Details": ["Grain variant not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
-                    if location is None:
+                    if not location:
                         response = {"status": 'val_error', "message": {"Details": ["Region not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
@@ -650,7 +653,8 @@ class EditorAssign(MethodView):
                         grain_variant_update = db3.update_one({"_id": ObjectId(g_v_id)}, {"$set": {
                             "updated_at": dt.datetime.now().strftime(
                                 "%Y-%m-%d %H:%M:%S"),
-                            "editor_id": employee_id}})
+                            "editor_id": employee_id, "emp_assign": "true", "employee": editor["employee_name"]}})
+
                         if editor_update.acknowledged and editor_update.modified_count == 1 and \
                                 grain_variant_update.acknowledged and grain_variant_update.modified_count == 1:
                             response = {"status": "success",

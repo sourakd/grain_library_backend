@@ -282,7 +282,7 @@ class FetchSpecificGrainVariant(MethodView):
                 if c_id and r_id and g_a_id:
                     find_grain_variant = db1.find(
                         {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
-                         "type_id": "grain_variant_assign"},
+                         "type_id": "grain_variant_assign", "editor_assign": "true"},
                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
                     find_grain_variant_list = list(find_grain_variant)
                     total_grain_variant = len(find_grain_variant_list)
@@ -333,11 +333,12 @@ class FetchAllGrainAndVariant(MethodView):
                 data = request.get_json()
                 c_id = data["c_id"]
                 r_id = data["r_id"]
+                editor_assign = data["editor_assign"]
 
-                if c_id and r_id:
+                if c_id and r_id and editor_assign:
                     find_grain_variant = db1.find(
                         {"status": "active", "c_id": c_id, "r_id": r_id,
-                         "type_id": "grain_variant_assign"},
+                         "type_id": "grain_variant_assign", "editor_assign": editor_assign},
                         {"grain": 1, "grain_variant": 1, "status": 1}).sort("grain", 1)
 
                     find_grain_variant_list = list(find_grain_variant)
@@ -672,7 +673,7 @@ class AssignGrainVariant(MethodView):
 
                             db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
                                             "grain_variant": grain_variant, "status": "active",
-                                            "approve_status": "pending",
+                                            "approve_status": "pending", "editor_assign": "false",
                                             "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
                                             "g_a_id": g_a_id,
                                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -775,8 +776,31 @@ class FetchAllGrainVariantBaseOnRegion(MethodView):
                 db1 = db["grain_assign"]
                 data = request.get_json()
                 r_id = data["r_id"]
+                editor_assign = data["emp_assign"]
 
-                if r_id:
+                if r_id and editor_assign:
+                    find_all_grain_variant = db1.find(
+                        {"r_id": r_id, "status": "active", "type_id": "grain_variant_assign",
+                         "editor_assign": editor_assign}).sort(
+                        "grain_variant", 1)
+                    grain_variant_list = list(find_all_grain_variant)
+                    total_grain_variant = len(grain_variant_list)
+                    if total_grain_variant != 0:
+                        for i in grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": grain_variant_list,
+                                    "total_grain_variant": total_grain_variant,
+                                    "message": "Employee "
+                                               "fetched "
+                                               "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"status": "val_error", "message": "No grain variant found"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 404
+
+                elif r_id and not editor_assign:
                     find_all_grain_variant = db1.find(
                         {"r_id": r_id, "status": "active", "type_id": "grain_variant_assign"}).sort(
                         "grain_variant", 1)
@@ -798,7 +822,7 @@ class FetchAllGrainVariantBaseOnRegion(MethodView):
                         return make_response(jsonify(response)), 404
 
                 else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter region"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter correct details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
 

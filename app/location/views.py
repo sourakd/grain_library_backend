@@ -266,7 +266,7 @@ class FetchRegion(MethodView):
                 if country and emp_assign:
                     find_region = db1.find(
                         {"status": "active", "type_id": "region", "country": country, "emp_assign": emp_assign},
-                        {"location": 1})
+                        {"location": 1, "emp_id": 1, "employee": 1})
                     find_region_list = list(find_region)
                     total_region = db1.count_documents(
                         {"status": "active", "type_id": "region", "country": country, "emp_assign": emp_assign})
@@ -282,14 +282,14 @@ class FetchRegion(MethodView):
                         return make_response(jsonify(response)), 200
 
                     else:
-                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name1"]}}
+                        response = {"status": 'val_error', "message": {"Country": ["Please add region first (1)"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
                 if country and emp_assign is None or emp_assign == "":
                     find_region = db1.find(
                         {"status": "active", "type_id": "region", "country": country},
-                        {"location": 1})
+                        {"location": 1, "emp_id": 1, "employee": 1})
                     find_region_list = list(find_region)
                     total_region = db1.count_documents(
                         {"status": "active", "type_id": "region", "country": country})
@@ -305,7 +305,7 @@ class FetchRegion(MethodView):
                         return make_response(jsonify(response)), 200
 
                     else:
-                        response = {"status": 'val_error', "message": {"Country": ["Please check the country name2"]}}
+                        response = {"status": 'val_error', "message": {"Country": ["Please add region first (2)"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 

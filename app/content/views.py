@@ -640,13 +640,67 @@ class content_approval_update(MethodView):
                 content_id = data["content_id"]
                 type_id = data["type_id"]
                 status = data["status"]
-                if content_id and status:
-                    db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
-                        "$set": {"status": status, "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
-                    response = {"message": f"Content status updated to {status} for id {content_id}",
-                                "status": "success"}
+                remarks = data["remarks"]
+
+                if content_id and status and remarks:
+                    find_content = db1.find_one({"_id": ObjectId(content_id), "type_id": type_id})
+                    if not find_content:
+                        response = {"message": {"Details": ["Content not found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 404
+                    else:
+                        db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
+                            "$set": {"status": status, "remarks": remarks,
+                                     "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+
+                        response = {"status": "success", "message": "Content updated successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 200
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
+class FetchContent(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["content"]
+                data = request.get_json()
+                type_id = data["type_id"]
+                g_v_id = data["g_v_id"]
+
+                if type_id and g_v_id:
+
+                    content_details = db1.find_one({"g_v_id": g_v_id, "type_id": type_id})
+                    if content_details:
+                        content_details["_id"] = str(content_details["_id"])
+                        response = {"message": "Content fetched successfully", "status": "success",
+                                    "data": content_details}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+                    else:
+                        response = {"message": {"Details": ["No content found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
@@ -672,6 +726,7 @@ eco_region = EcoRegionUpload.as_view('eco_region')
 culinary = CulinaryUpload.as_view('culinary')
 agronomy = AgronomyUpload.as_view('agronomy')
 content_approval_update = content_approval_update.as_view('content_approval_update')
+fetch_content = FetchContent.as_view('fetch_content')
 
 content_blueprint.add_url_rule('/content/story_upload', view_func=story_upload, methods=['POST'])
 content_blueprint.add_url_rule('/content/pre_harvest_morphology', view_func=pre_harvest_morphology, methods=['POST'])
@@ -680,3 +735,4 @@ content_blueprint.add_url_rule('/content/eco_region', view_func=eco_region, meth
 content_blueprint.add_url_rule('/content/culinary', view_func=culinary, methods=['POST'])
 content_blueprint.add_url_rule('/content/agronomy', view_func=agronomy, methods=['POST'])
 content_blueprint.add_url_rule('/content/content_approval_update', view_func=content_approval_update, methods=['POST'])
+content_blueprint.add_url_rule('/content/fetch_content', view_func=fetch_content, methods=['POST'])
