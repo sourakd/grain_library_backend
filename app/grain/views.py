@@ -673,7 +673,7 @@ class AssignGrainVariant(MethodView):
 
                             db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
                                             "grain_variant": grain_variant, "status": "active",
-                                            "approve_status": "pending", "editor_assign": "false",
+                                            "approve_status": "pending", "emp_assign": "false",
                                             "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
                                             "g_a_id": g_a_id,
                                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -776,12 +776,12 @@ class FetchAllGrainVariantBaseOnRegion(MethodView):
                 db1 = db["grain_assign"]
                 data = request.get_json()
                 r_id = data["r_id"]
-                editor_assign = data["emp_assign"]
+                emp_assign = data["emp_assign"]
 
-                if r_id and editor_assign:
+                if r_id and emp_assign:
                     find_all_grain_variant = db1.find(
                         {"r_id": r_id, "status": "active", "type_id": "grain_variant_assign",
-                         "editor_assign": editor_assign}).sort(
+                         "emp_assign": emp_assign}).sort(
                         "grain_variant", 1)
                     grain_variant_list = list(find_all_grain_variant)
                     total_grain_variant = len(grain_variant_list)
@@ -800,7 +800,7 @@ class FetchAllGrainVariantBaseOnRegion(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 404
 
-                elif r_id and not editor_assign:
+                elif r_id and not emp_assign:
                     find_all_grain_variant = db1.find(
                         {"r_id": r_id, "status": "active", "type_id": "grain_variant_assign"}).sort(
                         "grain_variant", 1)
