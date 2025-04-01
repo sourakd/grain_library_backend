@@ -643,11 +643,19 @@ class content_approval_update(MethodView):
                 remarks = data["remarks"]
 
                 if content_id and status and remarks:
+
                     find_content = db1.find_one({"_id": ObjectId(content_id), "type_id": type_id})
+
+                    if find_content["status"] == "approve":
+                        response = {"message": {"Details": ["Content already approved"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     if not find_content:
                         response = {"message": {"Details": ["Content not found"]}, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 404
+
                     else:
                         db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
                             "$set": {"status": status, "remarks": remarks,

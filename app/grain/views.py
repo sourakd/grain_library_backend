@@ -278,11 +278,30 @@ class FetchSpecificGrainVariant(MethodView):
                 c_id = data["c_id"]
                 r_id = data["r_id"]
                 g_a_id = data["g_a_id"]
+                emp_assign = data["emp_assign"]
 
-                if c_id and r_id and g_a_id:
+                if c_id and r_id and g_a_id and emp_assign:
                     find_grain_variant = db1.find(
                         {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
-                         "type_id": "grain_variant_assign", "editor_assign": "true"},
+                         "type_id": "grain_variant_assign", "emp_assign": emp_assign},
+                        {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
+                    find_grain_variant_list = list(find_grain_variant)
+                    total_grain_variant = len(find_grain_variant_list)
+
+                    if total_grain_variant > 0:
+                        for i in find_grain_variant_list:
+                            i["_id"] = str(i["_id"])
+                        response = {"status": "success", "data": find_grain_variant_list,
+                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
+                                                                                           "fetched "
+                                                                                           "successfully"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 200
+
+                elif c_id and r_id and g_a_id and not emp_assign:
+                    find_grain_variant = db1.find(
+                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
+                         "type_id": "grain_variant_assign"},
                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
                     find_grain_variant_list = list(find_grain_variant)
                     total_grain_variant = len(find_grain_variant_list)
@@ -333,12 +352,12 @@ class FetchAllGrainAndVariant(MethodView):
                 data = request.get_json()
                 c_id = data["c_id"]
                 r_id = data["r_id"]
-                editor_assign = data["editor_assign"]
+                emp_assign = data["emp_assign"]
 
-                if c_id and r_id and editor_assign:
+                if c_id and r_id and emp_assign:
                     find_grain_variant = db1.find(
                         {"status": "active", "c_id": c_id, "r_id": r_id,
-                         "type_id": "grain_variant_assign", "editor_assign": editor_assign},
+                         "type_id": "grain_variant_assign", "emp_assign": emp_assign},
                         {"grain": 1, "grain_variant": 1, "status": 1}).sort("grain", 1)
 
                     find_grain_variant_list = list(find_grain_variant)

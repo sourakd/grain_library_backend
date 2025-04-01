@@ -284,24 +284,75 @@ class EmployeeDetails(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["employee_registration"]
+                db2 = db["location"]
+                db3 = db["grain_assign"]
                 data = request.get_json()
                 type_id = data["type_id"]
                 employee_id = data["emp_id"]
 
                 if type_id and employee_id:
+
                     find_employee = db1.find_one(
                         {"status": {"$ne": "delete"}, "type_id": type_id, "_id": ObjectId(employee_id)},
                         {"password": 0})
-                    if find_employee:
-                        find_employee["_id"] = str(find_employee["_id"])
-                        response = {"status": "success", "data": find_employee,
-                                    "message": "Employee fetched successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-                    else:
+
+                    if not find_employee:
                         response = {"status": 'val_error', "message": {"Employee": ["Employee not found"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
+
+                    if type_id == "editor":
+
+                        loc_id = find_employee["loc_id"]
+                        if not loc_id:
+                            response = {"status": 'val_error', "message": {"Employee": ["Employee type not found"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        g_v_id = find_employee["g_v_id"]
+                        if not g_v_id:
+                            response = {"status": 'val_error', "message": {"Employee": ["Employee type not found"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if find_employee:
+
+                            find_location = db2.find_one(
+                                {"status": {"$ne": "delete"}, "_id": ObjectId(loc_id), "emp_assign": "true"},
+                                {"location": 1, "employee": 1})
+
+                            location = find_location.get("location", "location not found")
+                            employee = find_location.get("employee", "Employee not found")
+
+                            find_grain_variant = db3.find_one(
+                                {"status": {"$ne": "delete"}, "_id": ObjectId(g_v_id)},
+                                {"grain_variant": 1})
+
+                            grain_variant = find_grain_variant.get("grain_variant", "Grain variant not found")
+
+                            find_employee["_id"] = str(find_employee["_id"])
+                            find_employee["location"] = location
+                            find_employee["employee"] = employee
+                            find_employee["grain_variant"] = grain_variant
+                            response = {"status": "success", "data": find_employee,
+                                        "message": "Employee fetched successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": 'val_error', "message": {"Employee": ["Employee not found"]}}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                    if type_id != "editor":
+                        find_employee = db1.find_one(
+                            {"status": {"$ne": "delete"}, "type_id": type_id, "_id": ObjectId(employee_id)},
+                            {"password": 0})
+                        if find_employee:
+                            find_employee["_id"] = str(find_employee["_id"])
+                            response = {"status": "success", "data": find_employee,
+                                        "message": "Employee fetched successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}

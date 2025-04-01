@@ -72,7 +72,7 @@ class EmployeeRegistrationSchema(Schema):
             if not aadhar_pattern.match(data["id_no"]):
                 raise ValidationError({"id_no": ["Please enter a valid Aadhar card number (12 characters)"]})
             if db1.count_documents({"id_no": {"$eq": data["id_no"]}}, collation={"locale": "en", "strength": 2}) > 0:
-                raise ValidationError("Aadhar card already exists")
+                raise ValidationError("Aadhar already exists")
         elif data["id_proof"] == "voter":
             voter_pattern = re.compile(r'^[A-Z]{3}\d{7}$')
             if not voter_pattern.match(data["id_no"]):
