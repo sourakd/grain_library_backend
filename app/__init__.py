@@ -44,10 +44,12 @@ def create_app(config_name):
     from app.grain.views import grain_add
     from app.super_employee.views import super_employee_access
     from app.content.views import content_blueprint
+    from app.user.views import user
 
     app.register_blueprint(employee_access)
     app.register_blueprint(location_add)
     app.register_blueprint(grain_add)
     app.register_blueprint(super_employee_access)
     app.register_blueprint(content_blueprint)
+    app.register_blueprint(user)
     return app

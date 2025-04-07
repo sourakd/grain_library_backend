@@ -694,10 +694,11 @@ class FetchContent(MethodView):
                 data = request.get_json()
                 type_id = data["type_id"]
                 g_v_id = data["g_v_id"]
+                status = data["status"]
 
-                if type_id and g_v_id:
+                if type_id and g_v_id and status:
 
-                    content_details = db1.find_one({"g_v_id": g_v_id, "type_id": type_id})
+                    content_details = db1.find_one({"g_v_id": g_v_id, "type_id": type_id, "status": status})
                     if content_details:
                         content_details["_id"] = str(content_details["_id"])
                         response = {"message": "Content fetched successfully", "status": "success",

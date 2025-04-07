@@ -236,89 +236,15 @@ class FetchAllGrainVariant(MethodView):
                         for i in find_grain_variant_list:
                             i["_id"] = str(i["_id"])
                         response = {"status": "success", "data": find_grain_variant_list,
-                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
-                                                                                           "fetched "
+
+                                    "total_grain_variant": total_grain_variant, "message": "Grain variant fetched "
                                                                                            "successfully"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 200
 
                     else:
-                        response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
-                                                                                         "first"]}}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-
-                else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
-                    stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
-
-            else:
-                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
-                stop_and_check_mongo_status(conn)
-                return make_response(jsonify(response)), 400
-
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            response = {"status": 'val_error', "message": f'{str(e)}'}
-            stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 400
-
-
-class FetchSpecificGrainVariant(MethodView):
-    @cross_origin(supports_credentials=True)
-    def post(self):
-        try:
-            start_and_check_mongo()
-            db = database_connect_mongo()
-            if db is not None:
-                db1 = db["grain_assign"]
-                data = request.get_json()
-                c_id = data["c_id"]
-                r_id = data["r_id"]
-                g_a_id = data["g_a_id"]
-                emp_assign = data["emp_assign"]
-
-                if c_id and r_id and g_a_id and emp_assign:
-                    find_grain_variant = db1.find(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
-                         "type_id": "grain_variant_assign", "emp_assign": emp_assign},
-                        {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
-                    find_grain_variant_list = list(find_grain_variant)
-                    total_grain_variant = len(find_grain_variant_list)
-
-                    if total_grain_variant > 0:
-                        for i in find_grain_variant_list:
-                            i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_grain_variant_list,
-                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
-                                                                                           "fetched "
-                                                                                           "successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-
-                elif c_id and r_id and g_a_id and not emp_assign:
-                    find_grain_variant = db1.find(
-                        {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
-                         "type_id": "grain_variant_assign"},
-                        {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
-                    find_grain_variant_list = list(find_grain_variant)
-                    total_grain_variant = len(find_grain_variant_list)
-
-                    if total_grain_variant > 0:
-                        for i in find_grain_variant_list:
-                            i["_id"] = str(i["_id"])
-                        response = {"status": "success", "data": find_grain_variant_list,
-                                    "total_grain_variant": total_grain_variant, "message": "Grain variant "
-                                                                                           "fetched "
-                                                                                           "successfully"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
-
-                    else:
-                        response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
-                                                                                         "first"]}}
+                        response = {"status": 'val_error',
+                                    "message": {"Grain_variant": ["Please add a grain variant first"]}}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
@@ -647,6 +573,277 @@ class FetchSpecificGrain(MethodView):
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
             return make_response(jsonify(response)), 400
+
+
+# class FetchSpecificGrainVariant1(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is not None:
+#                 db1 = db["grain_assign"]
+#                 data = request.get_json()
+#                 c_id = data["c_id"]
+#                 r_id = data["r_id"]
+#                 g_a_id = data["g_a_id"]
+#                 emp_assign = data["emp_assign"]
+#
+#                 if c_id and r_id and g_a_id and emp_assign:
+#                     find_grain_variant = db1.find(
+#                         {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
+#                          "type_id": "grain_variant_assign", "emp_assign": emp_assign},
+#                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
+#                     find_grain_variant_list = list(find_grain_variant)
+#                     total_grain_variant = len(find_grain_variant_list)
+#
+#                     if total_grain_variant > 0:
+#                         for i in find_grain_variant_list:
+#                             i["_id"] = str(i["_id"])
+#                         response = {"status": "success", "data": find_grain_variant_list,
+#                                     "total_grain_variant": total_grain_variant, "message": "Grain variant "
+#                                                                                            "fetched "
+#                                                                                            "successfully"}
+#                         stop_and_check_mongo_status(conn)
+#                         return make_response(jsonify(response)), 200
+#
+#                 elif c_id and r_id and g_a_id and not emp_assign:
+#                     find_grain_variant = db1.find(
+#                         {"status": "active", "c_id": c_id, "r_id": r_id, "g_a_id": g_a_id,
+#                          "type_id": "grain_variant_assign"},
+#                         {"grain_variant": 1, "status": 1}).sort("grain_variant", 1)
+#                     find_grain_variant_list = list(find_grain_variant)
+#                     total_grain_variant = len(find_grain_variant_list)
+#
+#                     if total_grain_variant > 0:
+#                         for i in find_grain_variant_list:
+#                             i["_id"] = str(i["_id"])
+#                         response = {"status": "success", "data": find_grain_variant_list,
+#                                     "total_grain_variant": total_grain_variant, "message": "Grain variant "
+#                                                                                            "fetched "
+#                                                                                            "successfully"}
+#                         stop_and_check_mongo_status(conn)
+#                         return make_response(jsonify(response)), 200
+#
+#                     else:
+#                         response = {"status": 'val_error', "message": {"Grain_variant": ["Please add a grain variant "
+#                                                                                          "first"]}}
+#                         stop_and_check_mongo_status(conn)
+#                         return make_response(jsonify(response)), 400
+#
+#                 else:
+#                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+#                     stop_and_check_mongo_status(conn)
+#                     return make_response(jsonify(response)), 400
+#
+#             else:
+#                 response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+#                 stop_and_check_mongo_status(conn)
+#                 return make_response(jsonify(response)), 400
+#
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc()
+#             response = {"status": 'val_error', "message": f'{str(e)}'}
+#             stop_and_check_mongo_status(conn)
+#             return make_response(jsonify(response)), 400
+
+
+# class FetchSpecificGrainVariant(MethodView):
+#     @cross_origin(supports_credentials=True)
+#     def post(self):
+#         try:
+#             start_and_check_mongo()
+#             db = database_connect_mongo()
+#             if db is None:
+#                 return make_response(jsonify({
+#                     "status": 'val_error',
+#                     "message": {"Details": ["Database connection failed"]}
+#                 })), 400
+#
+#             db1 = db["grain_assign"]
+#             data = request.get_json()
+#
+#             # Input validation
+#             required_fields = ['c_id', 'r_id', 'g_a_id', 'emp_assign']
+#
+#             # if not all(field in data for field in required_fields):
+#             #     return make_response(jsonify({
+#             #         "status": 'val_error',
+#             #         "message": {"Details": ["Missing required fields"]}
+#             #     })), 400
+#
+#             # missing_fields = [field for field in required_fields if field not in data]
+#             # if missing_fields:
+#             #     return make_response(jsonify({
+#             #         "status": 'val_error',
+#             #         "message": {
+#             #             "Details": ["Missing required fields"],
+#             #             "missing_fields": missing_fields
+#             #         }
+#             #     })), 400
+#
+#             missing_fields = [field for field in required_fields if field not in data]
+#             if missing_fields:
+#                 return make_response(jsonify({
+#                     "status": 'val_error',
+#                     "message": {"Details": [f"Missing required fields: {', '.join(missing_fields)}"]}
+#                 })), 400
+#
+#             c_id = data["c_id"]
+#             r_id = data["r_id"]
+#             g_a_id = data["g_a_id"]
+#             emp_assign = data["emp_assign"]
+#
+#             # Base query
+#             query = {
+#                 "status": "active",
+#                 "c_id": c_id,
+#                 "r_id": r_id,
+#                 "g_a_id": g_a_id,
+#                 "type_id": "grain_variant_assign"
+#             }
+#
+#             # Add emp_assign to query if it exists
+#             if emp_assign:
+#                 query["emp_assign"] = emp_assign
+#
+#             find_grain_variant = db1.find(
+#                 query,
+#                 {"grain_variant": 1, "status": 1}
+#             ).sort("grain_variant", 1)
+#
+#             find_grain_variant_list = list(find_grain_variant)
+#             total_grain_variant = len(find_grain_variant_list)
+#
+#             if total_grain_variant == 0:
+#                 return make_response(jsonify({
+#                     "status": 'val_error',
+#                     "message": {"Grain_variant": ["Please add a grain variant first"]}
+#                 })), 400
+#
+#             # Convert ObjectId to string
+#             for variant in find_grain_variant_list:
+#                 variant["_id"] = str(variant["_id"])
+#
+#             response = {
+#                 "status": "success",
+#                 "data": find_grain_variant_list,
+#                 "total_grain_variant": total_grain_variant,
+#                 "message": "Grain variant fetched successfully"
+#             }
+#
+#             return make_response(jsonify(response)), 200
+#
+#         except Exception as e:
+#             import traceback
+#             traceback.print_exc()
+#             return make_response(jsonify({
+#                 "status": 'val_error',
+#                 "message": str(e)
+#             })), 500
+#
+#         finally:
+#             if conn:
+#                 stop_and_check_mongo_status(conn)
+
+
+class FetchSpecificGrainVariant(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is None:
+                return make_response(jsonify({
+                    "status": 'val_error',
+                    "message": {"Details": ["Database connection failed"]}
+                })), 400
+
+            db1 = db["grain_assign"]
+            data = request.get_json()
+
+            # Input validation
+            required_fields = ['c_id', 'r_id', 'g_a_id', 'emp_assign']
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                return make_response(jsonify({
+                    "status": 'val_error',
+                    "message": {"Details": [f"Missing required fields: {', '.join(missing_fields)}"]}
+                })), 400
+
+            # #Normal approach
+            # c_id = data["c_id"]
+            # r_id = data["r_id"]
+            # g_a_id = data["g_a_id"]
+            # emp_assign = data["emp_assign"]
+
+            # Option 1: Multiple assignments in one line
+            # c_id, r_id, g_a_id, emp_assign = data["c_id"], data["r_id"], data["g_a_id"], data["emp_assign"]
+
+            # Option 2: List comprehension
+            c_id, r_id, g_a_id, emp_assign = [data[key] for key in ("c_id", "r_id", "g_a_id", "emp_assign")]
+
+            # Option 3: Using operator.itemgetter (if you want to import it)
+            # from operator import itemgetter
+            # c_id, r_id, g_a_id, emp_assign = itemgetter("c_id", "r_id", "g_a_id", "emp_assign")(data)
+
+            # Base query
+            if emp_assign is not None:  # If emp_assign has a value
+                query = {
+                    "status": "active",
+                    "c_id": c_id,
+                    "r_id": r_id,
+                    "g_a_id": g_a_id,
+                    "type_id": "grain_variant_assign",
+                    "emp_assign": emp_assign
+                }
+            else:  # If emp_assign is None
+                query = {
+                    "status": "active",
+                    "c_id": c_id,
+                    "r_id": r_id,
+                    "g_a_id": g_a_id,
+                    "type_id": "grain_variant_assign"
+                }
+
+            find_grain_variant = db1.find(
+                query,
+                {"grain_variant": 1, "status": 1}
+            ).sort("grain_variant", 1)
+
+            find_grain_variant_list = list(find_grain_variant)
+            total_grain_variant = len(find_grain_variant_list)
+
+            if total_grain_variant == 0:
+                return make_response(jsonify({
+                    "status": 'val_error',
+                    "message": {"Grain_variant": ["Please add a grain variant first"]}
+                })), 400
+
+            # Convert ObjectId to string
+            for variant in find_grain_variant_list:
+                variant["_id"] = str(variant["_id"])
+
+            response = {
+                "status": "success",
+                "data": find_grain_variant_list,
+                "total_grain_variant": total_grain_variant,
+                "message": "Grain variant fetched successfully"
+            }
+
+            return make_response(jsonify(response)), 200
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return make_response(jsonify({
+                "status": 'val_error',
+                "message": str(e)
+            })), 500
+
+        finally:
+            stop_and_check_mongo_status(conn)
 
 
 class AssignGrainVariant(MethodView):
