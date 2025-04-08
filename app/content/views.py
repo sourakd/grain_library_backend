@@ -29,6 +29,7 @@ class StoryUpload(MethodView):
                 conserved_by = data["conserved_by"].lower()
                 pic_one = request.files.get("pic_one")
                 pic_two = request.files.get("pic_two")
+                pic_three = request.files.get("pic_three")
 
                 if story and g_v_id and conserved_by and pic_one and pic_two:
 
@@ -48,6 +49,7 @@ class StoryUpload(MethodView):
                         "conserved_by": conserved_by,
                         "pic_one": pic_one,
                         "pic_two": pic_two,
+                        "pic_three": pic_three,
                         "status": status,
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
@@ -70,7 +72,8 @@ class StoryUpload(MethodView):
                         try:
                             file_url1 = s3_uploader.upload_file(pic_one, type_id="story", status="pending")
                             file_url2 = s3_uploader.upload_file(pic_two, type_id="story", status="pending")
-                            file_url = [file_url1, file_url2]
+                            file_url3 = s3_uploader.upload_file(pic_three, type_id="story", status="pending")
+                            file_url = [file_url1, file_url2, file_url3]
                         except Exception as e:
                             response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
@@ -84,6 +87,7 @@ class StoryUpload(MethodView):
                         # Insert the data into the database
                         validated_data["pic_one"] = file_url1
                         validated_data["pic_two"] = file_url2
+                        validated_data["pic_three"] = file_url3
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
 

@@ -789,16 +789,8 @@ class FetchSpecificGrainVariant(MethodView):
             # c_id, r_id, g_a_id, emp_assign = itemgetter("c_id", "r_id", "g_a_id", "emp_assign")(data)
 
             # Base query
-            if emp_assign is not None:  # If emp_assign has a value
-                query = {
-                    "status": "active",
-                    "c_id": c_id,
-                    "r_id": r_id,
-                    "g_a_id": g_a_id,
-                    "type_id": "grain_variant_assign",
-                    "emp_assign": emp_assign
-                }
-            else:  # If emp_assign is None
+            if not emp_assign:  # If emp_assign has no value
+
                 query = {
                     "status": "active",
                     "c_id": c_id,
@@ -807,19 +799,29 @@ class FetchSpecificGrainVariant(MethodView):
                     "type_id": "grain_variant_assign"
                 }
 
+            else:  # If emp_assign has a value
+                query = {
+                    "status": "active",
+                    "c_id": c_id,
+                    "r_id": r_id,
+                    "g_a_id": g_a_id,
+                    "type_id": "grain_variant_assign",
+                    "emp_assign": emp_assign
+                }
+
             find_grain_variant = db1.find(
                 query,
                 {"grain_variant": 1, "status": 1}
             ).sort("grain_variant", 1)
 
-            find_grain_variant_list = list(find_grain_variant)
-            total_grain_variant = len(find_grain_variant_list)
-
-            if total_grain_variant == 0:
+            if not find_grain_variant:
                 return make_response(jsonify({
                     "status": 'val_error',
                     "message": {"Grain_variant": ["Please add a grain variant first"]}
                 })), 400
+
+            find_grain_variant_list = list(find_grain_variant)
+            total_grain_variant = len(find_grain_variant_list)
 
             # Convert ObjectId to string
             for variant in find_grain_variant_list:
