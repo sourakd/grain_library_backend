@@ -23,18 +23,18 @@ def get_url():
         return url_mongo_p
 
 
-def connect_mongo_db(url, port):
+def connect_mongo_db(url, port, timeout_ms=5000):
     max_retries = 3
     retry_delay = 1  # second
 
     for attempt in range(max_retries):
         try:
             if url == url_mongo_d and port == port_mongo:
-                return pymongo.MongoClient(url, port, serverSelectionTimeoutMS=5000)
+                return pymongo.MongoClient(url, port, serverSelectionTimeoutMS=timeout_ms)
 
             elif url == url_mongo_p and port == port_mongo:
                 return pymongo.MongoClient(url, port, username=db_username, password=db_password,
-                                           serverSelectionTimeoutMS=5000)
+                                           serverSelectionTimeoutMS=timeout_ms)
             else:
                 return None
 
@@ -43,7 +43,7 @@ def connect_mongo_db(url, port):
             time.sleep(retry_delay)
 
         except pymongo.errors.ServerSelectionTimeoutError as e:
-            print("Connection timeout error (attempt {attempt+1}/{max_retries}): {e}")
+            print(f"Connection timeout error (attempt {attempt + 1}/{max_retries}): {e}")
             time.sleep(retry_delay)
 
     print("Failed to connect to MongoDB after {} attempts".format(max_retries))
@@ -62,10 +62,10 @@ def connect_database(db_name, db_connect):
         return None
 
 
-def database_connect_mongo():
+def database_connect_mongo(timeout_ms=5000):
     url = get_url()
     port = port_mongo
-    conn = connect_mongo_db(url, port)
+    conn = connect_mongo_db(url, port, timeout_ms=timeout_ms)
     if conn:
         db_con = connect_database(db_name_mongo, conn)
         if db_con is not None:
@@ -78,11 +78,11 @@ def database_connect_mongo():
     return None
 
 
-def start_and_check_mongo():
+def start_and_check_mongo(timeout_ms=5000):
     url = get_url()
     port = port_mongo
     try:
-        conn = pymongo.MongoClient(url, port)
+        conn = pymongo.MongoClient(url, port, serverSelectionTimeoutMS=timeout_ms, socketTimeoutMS=5000)
         conn.admin.command('ping')
         print("MongoDB connection established and server is running")
         return conn
@@ -109,7 +109,7 @@ def stop_and_check_mongo_status(conn):
         client.close()
 
 
-conn = start_and_check_mongo()
-db = database_connect_mongo()
+conn = start_and_check_mongo(timeout_ms=5000)
+db = database_connect_mongo(timeout_ms=5000)
 # Perform operations on the database
 stop_and_check_mongo_status(conn)

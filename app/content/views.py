@@ -137,10 +137,22 @@ class PreHarvestMorphologyUpload(MethodView):
                 flag_leaf_width = data["flag_leaf_width"]
                 ligule_shape = data["ligule_shape"]
                 ligule_colour = data["ligule_colour"]
-                pic_one = request.files.get("pic_one")
-                pic_two = request.files.get("pic_two")
+                plant_height_pic = request.files.get("plant_height_pic")
+                aroma_pic = request.files.get("aroma_pic")
+                culm_internode_colour_pic = request.files.get("culm_internode_colour_pic")
+                leaf_blade_colour_pic = request.files.get("leaf_blade_colour_pic")
+                leaf_blade_pubescence_pic = request.files.get("leaf_blade_pubescence_pic")
+                flag_leaf_angle_pic = request.files.get("flag_leaf_angle_pic")
+                flag_leaf_length_pic = request.files.get("flag_leaf_length_pic")
+                flag_leaf_width_pic = request.files.get("flag_leaf_width_pic")
+                ligule_shape_pic = request.files.get("ligule_shape_pic")
+                ligule_colour_pic = request.files.get("ligule_colour_pic")
 
-                if g_v_id and plant_height and aroma and culm_internode_colour and leaf_blade_colour and leaf_blade_pubescence and flag_leaf_angle and flag_leaf_length and flag_leaf_width and ligule_shape and ligule_colour and pic_one and pic_two:
+                if (g_v_id and plant_height and aroma and culm_internode_colour and leaf_blade_colour and
+                        leaf_blade_pubescence and flag_leaf_angle and flag_leaf_length and flag_leaf_width and
+                        ligule_shape and ligule_colour and plant_height_pic and aroma_pic and culm_internode_colour_pic and
+                        leaf_blade_colour_pic and leaf_blade_pubescence_pic and flag_leaf_angle_pic and flag_leaf_length_pic and
+                        flag_leaf_width_pic and ligule_shape_pic and ligule_colour_pic):
 
                     status = "pending"
                     type_id = "pre_harvest_morphology"
@@ -165,8 +177,16 @@ class PreHarvestMorphologyUpload(MethodView):
                         "flag_leaf_width": flag_leaf_width,
                         "ligule_shape": ligule_shape,
                         "ligule_colour": ligule_colour,
-                        "pic_one": pic_one,
-                        "pic_two": pic_two,
+                        "plant_height_pic": plant_height_pic,
+                        "aroma_pic": aroma_pic,
+                        "culm_internode_colour_pic": culm_internode_colour_pic,
+                        "leaf_blade_colour_pic": leaf_blade_colour_pic,
+                        "leaf_blade_pubescence_pic": leaf_blade_pubescence_pic,
+                        "flag_leaf_angle_pic": flag_leaf_angle_pic,
+                        "flag_leaf_length_pic": flag_leaf_length_pic,
+                        "flag_leaf_width_pic": flag_leaf_width_pic,
+                        "ligule_shape_pic": ligule_shape_pic,
+                        "ligule_colour_pic": ligule_colour_pic,
                         "status": status,
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
@@ -185,11 +205,28 @@ class PreHarvestMorphologyUpload(MethodView):
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
                         try:
-                            file_url1 = s3_uploader.upload_file(pic_one, type_id="pre_harvest_morphology",
+                            file_url1 = s3_uploader.upload_file(plant_height_pic, type_id="pre_harvest_morphology",
                                                                 status="pending")
-                            file_url2 = s3_uploader.upload_file(pic_two, type_id="pre_harvest_morphology",
+                            file_url2 = s3_uploader.upload_file(aroma_pic, type_id="pre_harvest_morphology",
                                                                 status="pending")
-                            file_url = [file_url1, file_url2]
+                            file_url3 = s3_uploader.upload_file(culm_internode_colour_pic,
+                                                                type_id="pre_harvest_morphology", status="pending")
+                            file_url4 = s3_uploader.upload_file(leaf_blade_colour_pic,
+                                                                type_id="pre_harvest_morphology", status="pending")
+                            file_url5 = s3_uploader.upload_file(leaf_blade_pubescence_pic,
+                                                                type_id="pre_harvest_morphology", status="pending")
+                            file_url6 = s3_uploader.upload_file(flag_leaf_angle_pic, type_id="pre_harvest_morphology",
+                                                                status="pending")
+                            file_url7 = s3_uploader.upload_file(flag_leaf_length_pic,
+                                                                type_id="pre_harvest_morphology", status="pending")
+                            file_url8 = s3_uploader.upload_file(flag_leaf_width_pic, type_id="pre_harvest_morphology",
+                                                                status="pending")
+                            file_url9 = s3_uploader.upload_file(ligule_shape_pic, type_id="pre_harvest_morphology",
+                                                                status="pending")
+                            file_url10 = s3_uploader.upload_file(ligule_colour_pic, type_id="pre_harvest_morphology",
+                                                                 status="pending")
+                            file_url = [file_url1, file_url2, file_url3, file_url4, file_url5, file_url6, file_url7,
+                                        file_url8, file_url9, file_url10]
                         except Exception as e:
                             response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
@@ -200,8 +237,16 @@ class PreHarvestMorphologyUpload(MethodView):
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
                         # Insert the data into the database
-                        validated_data["pic_one"] = file_url1
-                        validated_data["pic_two"] = file_url2
+                        validated_data["plant_height_pic"] = file_url1
+                        validated_data["aroma_pic"] = file_url2
+                        validated_data["culm_internode_colour_pic"] = file_url3
+                        validated_data["leaf_blade_colour_pic"] = file_url4
+                        validated_data["leaf_blade_pubescence_pic"] = file_url5
+                        validated_data["flag_leaf_angle_pic"] = file_url6
+                        validated_data["flag_leaf_length_pic"] = file_url7
+                        validated_data["flag_leaf_width_pic"] = file_url8
+                        validated_data["ligule_shape_pic"] = file_url9
+                        validated_data["ligule_colour_pic"] = file_url10
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
                         # Extract the _id value
@@ -255,10 +300,22 @@ class PostHarvestMorphologyUpload(MethodView):
                 kernel_colour = data["kernel_colour"].lower()
                 kernel_length = data["kernel_length"].lower()
                 kernel_width = data["kernel_width"].lower()
-                pic_one = request.files.get("pic_one")
-                pic_two = request.files.get("pic_two")
+                panicle_length_pic = request.files.get("panicle_length_pic")
+                panicle_threshability_pic = request.files.get("panicle_threshability_pic")
+                panicle_type_pic = request.files.get("panicle_type_pic")
+                awning_length_pic = request.files.get("awning_length_pic")
+                awning_colour_pic = request.files.get("awning_colour_pic")
+                grain_weight_pic = request.files.get("grain_weight_pic")
+                lemma_palea_colour_pic = request.files.get("lemma_palea_colour_pic")
+                lemma_palea_hair_pic = request.files.get("lemma_palea_hair_pic")
+                grain_length_pic = request.files.get("grain_length_pic")
+                grain_width_pic = request.files.get("grain_width_pic")
+                kernel_colour_pic = request.files.get("kernel_colour_pic")
+                kernel_length_pic = request.files.get("kernel_length_pic")
+                kernel_width_pic = request.files.get("kernel_width_pic")
 
-                if g_v_id and panicle_length and panicle_threshability and panicle_type and awning_length and awning_colour and grain_weight and lemma_palea_colour and lemma_palea_hair and grain_length and grain_width and kernel_colour and kernel_length and kernel_width and pic_one and pic_two:
+                if panicle_length_pic and panicle_threshability_pic and panicle_type_pic and awning_length_pic and awning_colour_pic and grain_weight_pic and lemma_palea_colour_pic and lemma_palea_hair_pic and grain_length_pic and grain_width_pic and kernel_colour_pic and kernel_length_pic and kernel_width_pic:
+
                     status = "pending"
                     type_id = "post_harvest_morphology"
 
@@ -285,8 +342,19 @@ class PostHarvestMorphologyUpload(MethodView):
                         "kernel_colour": kernel_colour,
                         "kernel_length": kernel_length,
                         "kernel_width": kernel_width,
-                        "pic_one": pic_one,
-                        "pic_two": pic_two,
+                        "panicle_length_pic": panicle_length_pic,
+                        "panicle_threshability_pic": panicle_threshability_pic,
+                        "panicle_type_pic": panicle_type_pic,
+                        "awning_length_pic": awning_length_pic,
+                        "awning_colour_pic": awning_colour_pic,
+                        "grain_weight_pic": grain_weight_pic,
+                        "lemma_palea_colour_pic": lemma_palea_colour_pic,
+                        "lemma_palea_hair_pic": lemma_palea_hair_pic,
+                        "grain_length_pic": grain_length_pic,
+                        "grain_width_pic": grain_width_pic,
+                        "kernel_colour_pic": kernel_colour_pic,
+                        "kernel_length_pic": kernel_length_pic,
+                        "kernel_width_pic": kernel_width_pic,
                         "status": status,
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
@@ -305,11 +373,34 @@ class PostHarvestMorphologyUpload(MethodView):
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
                         s3_uploader = S3Uploader(s3_config)
                         try:
-                            file_url1 = s3_uploader.upload_file(pic_one, type_id="post_harvest_morphology",
+                            file_url1 = s3_uploader.upload_file(panicle_length_pic, type_id="post_harvest_morphology",
                                                                 status="pending")
-                            file_url2 = s3_uploader.upload_file(pic_two, type_id="post_harvest_morphology",
+                            file_url2 = s3_uploader.upload_file(panicle_threshability_pic,
+                                                                type_id="post_harvest_morphology", status="pending")
+                            file_url3 = s3_uploader.upload_file(panicle_type_pic, type_id="post_harvest_morphology",
                                                                 status="pending")
-                            file_url = [file_url1, file_url2]
+                            file_url4 = s3_uploader.upload_file(awning_length_pic, type_id="post_harvest_morphology",
+                                                                status="pending")
+                            file_url5 = s3_uploader.upload_file(awning_colour_pic, type_id="post_harvest_morphology",
+                                                                status="pending")
+                            file_url6 = s3_uploader.upload_file(grain_weight_pic, type_id="post_harvest_morphology",
+                                                                status="pending")
+                            file_url7 = s3_uploader.upload_file(lemma_palea_colour_pic,
+                                                                type_id="post_harvest_morphology", status="pending")
+                            file_url8 = s3_uploader.upload_file(lemma_palea_hair_pic,
+                                                                type_id="post_harvest_morphology", status="pending")
+                            file_url9 = s3_uploader.upload_file(grain_length_pic, type_id="post_harvest_morphology",
+                                                                status="pending")
+                            file_url10 = s3_uploader.upload_file(grain_width_pic, type_id="post_harvest_morphology",
+                                                                 status="pending")
+                            file_url11 = s3_uploader.upload_file(kernel_colour_pic, type_id="post_harvest_morphology",
+                                                                 status="pending")
+                            file_url12 = s3_uploader.upload_file(kernel_length_pic, type_id="post_harvest_morphology",
+                                                                 status="pending")
+                            file_url13 = s3_uploader.upload_file(kernel_width_pic, type_id="post_harvest_morphology",
+                                                                 status="pending")
+                            file_url = [file_url1, file_url2, file_url3, file_url4, file_url5, file_url6, file_url7,
+                                        file_url8, file_url9, file_url10, file_url11, file_url12, file_url13]
                         except Exception as e:
                             response = {"message": str(e), "status": "val_error"}
                             stop_and_check_mongo_status(conn)
@@ -320,8 +411,19 @@ class PostHarvestMorphologyUpload(MethodView):
                             stop_and_check_mongo_status(conn)
                             return make_response(jsonify(response)), 400
                         # Insert the data into the database
-                        validated_data["pic_one"] = file_url1
-                        validated_data["pic_two"] = file_url2
+                        validated_data["panicle_length_pic"] = file_url1
+                        validated_data["panicle_threshability_pic"] = file_url2
+                        validated_data["panicle_type_pic"] = file_url3
+                        validated_data["awning_length_pic"] = file_url4
+                        validated_data["awning_colour_pic"] = file_url5
+                        validated_data["grain_weight_pic"] = file_url6
+                        validated_data["lemma_palea_colour_pic"] = file_url7
+                        validated_data["lemma_palea_hair_pic"] = file_url8
+                        validated_data["grain_length_pic"] = file_url9
+                        validated_data["grain_width_pic"] = file_url10
+                        validated_data["kernel_colour_pic"] = file_url11
+                        validated_data["kernel_length_pic"] = file_url12
+                        validated_data["kernel_width_pic"] = file_url13
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
                         # Extract the _id value
@@ -640,6 +742,7 @@ class content_approval_update(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["content"]
+                db2 = db["grain_assign"]
                 data = request.get_json()
                 content_id = data["content_id"]
                 type_id = data["type_id"]
@@ -660,10 +763,37 @@ class content_approval_update(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 404
 
+                    g_v_id = find_content["g_v_id"]
+
+                    grain_variant = db2.find_one({"_id": ObjectId(g_v_id), "status": "active"})
+
+                    if not grain_variant:
+                        response = {"message": {"Details": ["Grain variant not found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 404
+
                     else:
+
+                        approve_status = grain_variant["approve_status"]
+                        print(approve_status)
+
                         db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
                             "$set": {"status": status, "remarks": remarks,
                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+
+                        if approve_status == "pending":
+                            db2.update_one(
+                                {"_id": ObjectId(g_v_id), "status": "active"},
+                                {"$set": {"approve_status": [type_id],
+                                          "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+                            )
+
+                        else:
+                            db2.update_one(
+                                {"_id": ObjectId(g_v_id), "status": "active"},
+                                {"$addToSet": {"approve_status": type_id},
+                                 "$set": {"updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+                            )
 
                         response = {"status": "success", "message": "Content updated successfully"}
                         stop_and_check_mongo_status(conn)

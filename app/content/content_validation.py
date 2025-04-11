@@ -116,12 +116,20 @@ class PreHarvestMorphologyUpload(Schema):
     flag_leaf_width = fields.Str(required=True)
     ligule_shape = fields.Str(required=True)
     ligule_colour = fields.Str(required=True)
-    pic_one = fields.Raw(required=True)
-    pic_two = fields.Raw(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
     status = fields.Str(required=True)
+    plant_height_pic = fields.Raw(required=True)
+    aroma_pic = fields.Raw(required=True)
+    culm_internode_colour_pic = fields.Raw(required=True)
+    leaf_blade_colour_pic = fields.Raw(required=True)
+    leaf_blade_pubescence_pic = fields.Raw(required=True)
+    flag_leaf_angle_pic = fields.Raw(required=True)
+    flag_leaf_length_pic = fields.Raw(required=True)
+    flag_leaf_width_pic = fields.Raw(required=True)
+    ligule_shape_pic = fields.Raw(required=True)
+    ligule_colour_pic = fields.Raw(required=True)
 
     @validates('g_v_id')
     def validate_g_v_id(self, value):
@@ -223,35 +231,147 @@ class PreHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Ligule colour must contain only alphabets and spaces')
 
-    @validates('pic_one')
+    @validates('plant_height_pic')
     def validate_pic_one(self, value):
         if not value:
-            raise ValidationError('Picture one is required')
+            raise ValidationError('Picture of plant height is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture one must be a file')
+            raise ValidationError('Picture of plant height must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture one must be a JPEG, JPG or PNG file')
+            raise ValidationError('Picture of plant height must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
         if file_size < 300 * 1024 or file_size > 500 * 1024:
-            raise ValidationError('Picture one must be between 300KB and 500KB')
+            raise ValidationError('Picture of plant height must be between 300KB and 500KB')
 
-    @validates('pic_two')
+    @validates('aroma_pic')
     def validate_pic_two(self, value):
         if not value:
-            raise ValidationError('Picture two is required')
+            raise ValidationError('Picture of aroma is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture two must be a file')
+            raise ValidationError('Picture of aroma must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture two must be a JPEG, JPG or PNG file')
+            raise ValidationError('Picture of aroma must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
         if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture two must be between 300KB and 500KB')
+            raise ValidationError('Picture of aroma must be between 300KB and 500KB')
+
+    @validates('culm_internode_colour_pic')
+    def validate_pic_three(self, value):
+        if not value:
+            raise ValidationError('Picture of culm internode colour is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of culm internode colour must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of culm internode colour must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of culm internode colour must be between 300KB and 500KB')
+
+    @validates('leaf_blade_colour_pic')
+    def validate_pic_four(self, value):
+        if not value:
+            raise ValidationError('Picture of leaf blade colour is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of leaf blade colour must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of leaf blade colour must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of leaf blade colour must be between 300KB and 500KB')
+
+    @validates('leaf_blade_pubescence_pic')
+    def validate_pic_five(self, value):
+        if not value:
+            raise ValidationError('Picture of leaf blade pubescence is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of leaf blade pubescence must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of leaf blade pubescence must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of leaf blade pubescence must be between 300KB and 500KB')
+
+    @validates('flag_leaf_angle_pic')
+    def validate_pic_six(self, value):
+        if not value:
+            raise ValidationError('Picture of flag leaf angle is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of flag leaf angle must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of flag leaf angle must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of flag leaf angle must be between 300KB and 500KB')
+
+    @validates('flag_leaf_length_pic')
+    def validate_pic_seven(self, value):
+        if not value:
+            raise ValidationError('Picture of flag leaf length is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of flag leaf length must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of flag leaf length must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of flag leaf length must be between 300KB and 500KB')
+
+    @validates('flag_leaf_width_pic')
+    def validate_pic_eight(self, value):
+        if not value:
+            raise ValidationError('Picture of flag leaf width is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of flag leaf width must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of flag leaf width must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of flag leaf width must be between 300KB and 500KB')
+
+    @validates('ligule_shape_pic')
+    def validate_pic_nine(self, value):
+        if not value:
+            raise ValidationError('Picture of ligule shape is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of ligule shape must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of ligule shape must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of ligule shape must be between 300KB and 500KB')
+
+    @validates('ligule_colour_pic')
+    def validate_pic_ten(self, value):
+        if not value:
+            raise ValidationError('Picture of ligule colour is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of ligule colour must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of ligule colour must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of ligule colour must be between 300KB and 500KB')
 
     @validates('status')
     def validate_status(self, value):
@@ -283,8 +403,19 @@ class PostHarvestMorphologyUpload(Schema):
     kernel_colour = fields.Str(required=True)
     kernel_length = fields.Str(required=True)
     kernel_width = fields.Str(required=True)
-    pic_one = fields.Raw(required=True)
-    pic_two = fields.Raw(required=True)
+    panicle_length_pic = fields.Raw(required=True)
+    panicle_threshability_pic = fields.Raw(required=True)
+    panicle_type_pic = fields.Raw(required=True)
+    awning_length_pic = fields.Raw(required=True)
+    awning_colour_pic = fields.Raw(required=True)
+    grain_weight_pic = fields.Raw(required=True)
+    lemma_palea_colour_pic = fields.Raw(required=True)
+    lemma_palea_hair_pic = fields.Raw(required=True)
+    grain_length_pic = fields.Raw(required=True)
+    grain_width_pic = fields.Raw(required=True)
+    kernel_colour_pic = fields.Raw(required=True)
+    kernel_length_pic = fields.Raw(required=True)
+    kernel_width_pic = fields.Raw(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
@@ -417,35 +548,187 @@ class PostHarvestMorphologyUpload(Schema):
         if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
             raise ValidationError('Kernel width must contain only numeric characters and up to 2 decimal places')
 
-    @validates('pic_one')
+    @validates('panicle_length_pic')
     def validate_pic_one(self, value):
         if not value:
-            raise ValidationError('Picture one is required')
+            raise ValidationError('Panicle length picture is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture one must be a file')
+            raise ValidationError('Panicle length picture must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture one must be a JPEG, JPG or PNG file')
+            raise ValidationError('Panicle length picture must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of panicle length must be between 300KB and 500KB')
 
-        if file_size < 300 * 1024 or file_size > 500 * 1024:
-            raise ValidationError('Picture one must be between 300KB and 500KB')
-
-    @validates('pic_two')
+    @validates('panicle_threshability_pic')
     def validate_pic_two(self, value):
         if not value:
-            raise ValidationError('Picture two is required')
+            raise ValidationError('Panicle threshability picture is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture two must be a file')
+            raise ValidationError('Panicle threshability picture must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture two must be a JPEG, JPG or PNG file')
+            raise ValidationError('Panicle threshability picture must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-
         if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture two must be between 300KB and 500KB')
+            raise ValidationError('Picture panicle threshability must be between 300KB and 500KB')
+
+    @validates('panicle_type_pic')
+    def validate_pic_three(self, value):
+        if not value:
+            raise ValidationError('Panicle type picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Panicle type picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Panicle type picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of panicle type must be between 300KB and 500KB')
+
+    @validates('awning_length_pic')
+    def validate_pic_four(self, value):
+        if not value:
+            raise ValidationError('Awning length picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Awning length picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Awning length picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of awning length must be between 300KB and 500KB')
+
+    @validates('awning_colour_pic')
+    def validate_pic_five(self, value):
+        if not value:
+            raise ValidationError('Awning colour picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Awning colour picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Awning colour picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of awning colour must be between 300KB and 500KB')
+
+    @validates('grain_weight_pic')
+    def validate_pic_six(self, value):
+        if not value:
+            raise ValidationError('Grain weight picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Grain weight picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Grain weight picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of grain weight must be between 300KB and 500KB')
+
+    @validates('lemma_palea_colour_pic')
+    def validate_pic_seven(self, value):
+        if not value:
+            raise ValidationError('Lemma palea colour picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Lemma palea colour picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Lemma palea colour picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of lemma palea colour must be between 300KB and 500KB')
+
+    @validates('lemma_palea_hair_pic')
+    def validate_pic_eight(self, value):
+        if not value:
+            raise ValidationError('Lemma palea hair picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Lemma palea hair picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Lemma palea hair picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of lemma palea hair must be between 300KB and 500KB')
+
+    @validates('grain_length_pic')
+    def validate_pic_nine(self, value):
+        if not value:
+            raise ValidationError('Grain length picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Grain length picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Grain length picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of grain length must be between 300KB and 500KB')
+
+    @validates('grain_width_pic')
+    def validate_pic_ten(self, value):
+        if not value:
+            raise ValidationError('Grain width picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Grain width picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Grain width picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of grain width must be between 300KB and 500KB')
+
+    @validates('kernel_colour_pic')
+    def validate_pic_eleven(self, value):
+        if not value:
+            raise ValidationError('Kernel colour picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Kernel colour picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Kernel colour picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of kernel colour must be between 300KB and 500KB')
+
+    @validates('kernel_length_pic')
+    def validate_pic_twelve(self, value):
+        if not value:
+            raise ValidationError('Kernel length picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Kernel length picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Kernel length picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of kernel length must be between 300KB and 500KB')
+
+    @validates('kernel_width_pic')
+    def validate_pic_thirteen(self, value):
+        if not value:
+            raise ValidationError('Kernel width picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Kernel width picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Kernel width picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture of kernel width must be between 300KB and 500KB')
 
     @validates('status')
     def validate_status(self, value):
