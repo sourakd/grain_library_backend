@@ -655,9 +655,9 @@ class AgronomyUpload(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["content"]
-                data = request.get_json()
+                data = dict(request.form)
                 g_v_id = data["g_v_id"]
-                seedbed_preparation = data["seedbed_preparation"]
+                seedbed_preparation_weeding = data["seedbed_preparation_weeding"]
                 seed_broadcast = data["seed_broadcast"]
                 field_preparation_weeding = data["field_preparation_weeding"]
                 transplantation = data["transplantation"]
@@ -665,8 +665,17 @@ class AgronomyUpload(MethodView):
                 weeding_phase_two = data["weeding_phase_two"]
                 flowering = data["flowering"]
                 harvest = data["harvest"]
+                seedbed_preparation_pic = request.files.get("seedbed_preparation_pic")
+                seed_broadcast_pic = request.files.get("seed_broadcast_pic")
+                field_preparation_weeding_pic = request.files.get("field_preparation_weeding_pic")
+                transplantation_pic = request.files.get("transplantation_pic")
+                tillering_starts_pic = request.files.get("tillering_starts_pic")
+                weeding_phase_two_pic = request.files.get("weeding_phase_two_pic")
+                flowering_pic = request.files.get("flowering_pic")
+                harvest_pic = request.files.get("harvest_pic")
 
-                if g_v_id and seedbed_preparation and seed_broadcast and field_preparation_weeding and transplantation and tillering_starts and weeding_phase_two and flowering and harvest:
+                if g_v_id and seedbed_preparation_weeding and seed_broadcast and field_preparation_weeding and transplantation and tillering_starts and weeding_phase_two and flowering and harvest and seedbed_preparation_pic and seed_broadcast_pic and field_preparation_weeding_pic and transplantation_pic and tillering_starts_pic and weeding_phase_two_pic and flowering_pic and harvest_pic:
+
                     status = "pending"
                     type_id = "agronomy"
                     # Check if the agronomy already exists
@@ -685,7 +694,7 @@ class AgronomyUpload(MethodView):
                     #         validated_data[key] = value
                     data = {
                         "g_v_id": g_v_id,
-                        "seedbed_preparation": seedbed_preparation,
+                        "seedbed_preparation_weeding": seedbed_preparation_weeding,
                         "seed_broadcast": seed_broadcast,
                         "field_preparation_weeding": field_preparation_weeding,
                         "transplantation": transplantation,
@@ -693,6 +702,14 @@ class AgronomyUpload(MethodView):
                         "weeding_phase_two": weeding_phase_two,
                         "flowering": flowering,
                         "harvest": harvest,
+                        "seedbed_preparation_pic": seedbed_preparation_pic,
+                        "seed_broadcast_pic": seed_broadcast_pic,
+                        "field_preparation_weeding_pic": field_preparation_weeding_pic,
+                        "transplantation_pic": transplantation_pic,
+                        "tillering_starts_pic": tillering_starts_pic,
+                        "weeding_phase_two_pic": weeding_phase_two_pic,
+                        "flowering_pic": flowering_pic,
+                        "harvest_pic": harvest_pic,
                         "status": status,
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
@@ -706,6 +723,50 @@ class AgronomyUpload(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
+
+                        # Update the updated_at field
+                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                        s3_config = S3Config()
+                        bucket_status, total_files, all_folders = s3_config.connect_to_s3()
+                        s3_uploader = S3Uploader(s3_config)
+
+                        try:
+                            file_url1 = s3_uploader.upload_file(seedbed_preparation_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url2 = s3_uploader.upload_file(seed_broadcast_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url3 = s3_uploader.upload_file(field_preparation_weeding_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url4 = s3_uploader.upload_file(transplantation_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url5 = s3_uploader.upload_file(tillering_starts_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url6 = s3_uploader.upload_file(weeding_phase_two_pic, type_id="agronomy",
+                                                                status="pending")
+                            file_url7 = s3_uploader.upload_file(flowering_pic, type_id="agronomy", status="pending")
+                            file_url8 = s3_uploader.upload_file(harvest_pic, type_id="agronomy", status="pending")
+                            file_urls = [file_url1, file_url2, file_url3, file_url4, file_url5, file_url6, file_url7,
+                                         file_url8]
+                        except Exception as e:
+                            response = {"message": str(e), "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        if s3_uploader.check_existing_file_content(file_urls, type_id):
+                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        # Insert the data into the database
+
+                        validated_data["seedbed_preparation_pic"] = file_url1
+                        validated_data["seed_broadcast_pic"] = file_url2
+                        validated_data["field_preparation_weeding_pic"] = file_url3
+                        validated_data["transplantation_pic"] = file_url4
+                        validated_data["tillering_starts_pic"] = file_url5
+                        validated_data["weeding_phase_two_pic"] = file_url6
+                        validated_data["flowering_pic"] = file_url7
+                        validated_data["harvest_pic"] = file_url8
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
@@ -838,11 +899,11 @@ class FetchContent(MethodView):
                         response = {"message": "Content fetched successfully", "status": "success",
                                     "data": content_details}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
                     else:
                         response = {"message": {"Details": ["No content found"]}, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
                 else:
                     response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
