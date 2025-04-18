@@ -455,6 +455,70 @@ class GStatusChange(MethodView):
             return make_response(jsonify(response)), 400
 
 
+class GAStatusChange(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain_assign"]
+                data = request.get_json()
+                g_status = data["g_status"].lower()
+                gs_id = data["gs_id"]
+                type_id = data["type_id"]
+
+                if g_status and gs_id and type_id:
+
+                    current_status = db1.find_one({"_id": ObjectId(gs_id), "type_id": type_id, }, {"status": 1})
+
+                    if current_status is None:
+                        response = {"status": 'val_error', "message": {"DB": ["Data not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if current_status["status"] == "delete":
+                        response = {"status": 'val_error', "message": {"Details": ["Grain not found"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    if current_status["status"] == g_status:
+                        response = {"status": 'val_error', "message": {"Details": [f"Grain is already {g_status}"]}}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    else:
+                        update_status = db1.update_one(
+                            {"_id": ObjectId(gs_id), "type_id": type_id, "status": {"$ne": "delete"}},
+                            {"$set": {"status": g_status,
+                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+
+                        if update_status.acknowledged and update_status.modified_count == 1:
+                            response = {"status": "success", "message": f"Grain {g_status} successfully"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 200
+                        else:
+                            response = {"status": "error", "message": "Grain not updated"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+                else:
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                stop_and_check_mongo_status(conn)
+                return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
+
+
 class AssignGrain(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -1062,6 +1126,7 @@ grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_vie
 grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
 grain_variant_fetch_view = FetchAllGrainVariant.as_view('grain_fetch_variant_view')
 g_status_change = GStatusChange.as_view('g_status')
+grain_assign_status_change = GAStatusChange.as_view('grain_assign_status_change')
 g_details = FetchGDetails.as_view('g_details')
 assign_grain = AssignGrain.as_view('grain_assign')
 assign_grain_variant = AssignGrainVariant.as_view('grain_assign_variant')
@@ -1077,6 +1142,7 @@ grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_v
 grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/g_status_change', view_func=g_status_change, methods=['POST'])
+grain_add.add_url_rule('/grain/grain_assign_status_change', view_func=grain_assign_status_change, methods=['POST'])
 grain_add.add_url_rule('/grain/g_details', view_func=g_details, methods=['POST'])
 grain_add.add_url_rule('/grain/assign_grain', view_func=assign_grain, methods=['POST'])
 grain_add.add_url_rule('/grain/assign_grain_variant', view_func=assign_grain_variant, methods=['POST'])

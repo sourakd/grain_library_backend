@@ -899,7 +899,7 @@ class FetchContent(MethodView):
                         response = {"message": "Content fetched successfully", "status": "success",
                                     "data": content_details}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
+                        return make_response(jsonify(response)), 200
                     else:
                         response = {"message": {"Details": ["No content found"]}, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
