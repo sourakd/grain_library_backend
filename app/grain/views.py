@@ -1142,7 +1142,7 @@ grain_add.add_url_rule('/grain/add_grain_variant', view_func=grain_variant_add_v
 grain_add.add_url_rule('/grain/fetch_grain', view_func=grain_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/fetch_grain_variant', view_func=grain_variant_fetch_view, methods=['POST'])
 grain_add.add_url_rule('/grain/g_status_change', view_func=g_status_change, methods=['POST'])
-grain_add.add_url_rule('/grain/grain_assign_status_change', view_func=grain_assign_status_change, methods=['POST'])
+grain_add.add_url_rule('/grain/g_a_status_change', view_func=grain_assign_status_change, methods=['POST'])
 grain_add.add_url_rule('/grain/g_details', view_func=g_details, methods=['POST'])
 grain_add.add_url_rule('/grain/assign_grain', view_func=assign_grain, methods=['POST'])
 grain_add.add_url_rule('/grain/assign_grain_variant', view_func=assign_grain_variant, methods=['POST'])
