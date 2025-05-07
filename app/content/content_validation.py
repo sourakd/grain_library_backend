@@ -8,7 +8,7 @@ from db_connection import database_connect_mongo
 
 
 class StoryUpload(Schema):
-    story = fields.Str(required=True)
+    story = fields.Raw(required=True)
     g_v_id = fields.Str(required=True)
     conserved_by = fields.Str(required=True)
     pic_one = fields.Raw(required=True)
@@ -24,10 +24,6 @@ class StoryUpload(Schema):
     def validate_story(self, value):
         if not value:
             raise ValidationError('Story is required')
-        elif len(re.findall(r'\b\w+\b', value)) < 5:
-            raise ValidationError('Story must be at least 500 words')
-        elif len(re.findall(r'\b\w+\b', value)) > 10:
-            raise ValidationError('Story must not exceed 600 words')
 
     @validates('g_v_id')
     def validate_g_v_id(self, value):
@@ -56,8 +52,8 @@ class StoryUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if file_size < 300 * 1024 or file_size > 500 * 1024:
-            raise ValidationError('Picture one must be between 300KB and 500KB')
+        if file_size < 300 * 1024 or file_size > 1024 * 1024:
+            raise ValidationError('Picture one must be between 300KB and 1MB')
 
     @validates('pic_two')
     def validate_pic_two(self, value):
@@ -71,8 +67,8 @@ class StoryUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture two must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture two must be between 300KB and 1MB')
 
     @validates('pic_three')
     def validate_pic_three(self, value):
@@ -86,8 +82,8 @@ class StoryUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture three must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture three must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -243,8 +239,8 @@ class PreHarvestMorphologyUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if file_size < 300 * 1024 or file_size > 500 * 1024:
-            raise ValidationError('Picture of plant height must be between 300KB and 500KB')
+        if file_size < 300 * 1024 or file_size > 1024 * 1024:
+            raise ValidationError('Picture of plant height must be between 300KB and 1MB')
 
     @validates('aroma_pic')
     def validate_pic_two(self, value):
@@ -258,8 +254,8 @@ class PreHarvestMorphologyUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of aroma must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of aroma must be between 300KB and 1MB')
 
     @validates('culm_internode_colour_pic')
     def validate_pic_three(self, value):
@@ -272,8 +268,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of culm internode colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of culm internode colour must be between 300KB and 1MB')
 
     @validates('leaf_blade_colour_pic')
     def validate_pic_four(self, value):
@@ -286,8 +282,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of leaf blade colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of leaf blade colour must be between 300KB and 1MB')
 
     @validates('leaf_blade_pubescence_pic')
     def validate_pic_five(self, value):
@@ -300,8 +296,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of leaf blade pubescence must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of leaf blade pubescence must be between 300KB and 1MB')
 
     @validates('flag_leaf_angle_pic')
     def validate_pic_six(self, value):
@@ -314,8 +310,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of flag leaf angle must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of flag leaf angle must be between 300KB and 1MB')
 
     @validates('flag_leaf_length_pic')
     def validate_pic_seven(self, value):
@@ -328,8 +324,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of flag leaf length must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of flag leaf length must be between 300KB and 1MB')
 
     @validates('flag_leaf_width_pic')
     def validate_pic_eight(self, value):
@@ -342,8 +338,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of flag leaf width must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of flag leaf width must be between 300KB and 1MB')
 
     @validates('ligule_shape_pic')
     def validate_pic_nine(self, value):
@@ -356,8 +352,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of ligule shape must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of ligule shape must be between 300KB and 1MB')
 
     @validates('ligule_colour_pic')
     def validate_pic_ten(self, value):
@@ -370,8 +366,8 @@ class PreHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of ligule colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of ligule colour must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -559,8 +555,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of panicle length must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle length must be between 300KB and 1MB')
 
     @validates('panicle_threshability_pic')
     def validate_pic_two(self, value):
@@ -573,8 +569,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture panicle threshability must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture panicle threshability must be between 300KB and 1MB')
 
     @validates('panicle_type_pic')
     def validate_pic_three(self, value):
@@ -587,8 +583,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of panicle type must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle type must be between 300KB and 1MB')
 
     @validates('awning_length_pic')
     def validate_pic_four(self, value):
@@ -601,8 +597,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of awning length must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of awning length must be between 300KB and 1MB')
 
     @validates('awning_colour_pic')
     def validate_pic_five(self, value):
@@ -615,8 +611,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of awning colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of awning colour must be between 300KB and 1MB')
 
     @validates('grain_weight_pic')
     def validate_pic_six(self, value):
@@ -629,8 +625,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of grain weight must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of grain weight must be between 300KB and 1MB')
 
     @validates('lemma_palea_colour_pic')
     def validate_pic_seven(self, value):
@@ -643,8 +639,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of lemma palea colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of lemma palea colour must be between 300KB and 1MB')
 
     @validates('lemma_palea_hair_pic')
     def validate_pic_eight(self, value):
@@ -657,8 +653,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of lemma palea hair must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of lemma palea hair must be between 300KB and 1MB')
 
     @validates('grain_length_pic')
     def validate_pic_nine(self, value):
@@ -671,8 +667,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of grain length must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of grain length must be between 300KB and 1MB')
 
     @validates('grain_width_pic')
     def validate_pic_ten(self, value):
@@ -685,8 +681,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of grain width must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of grain width must be between 300KB and 1MB')
 
     @validates('kernel_colour_pic')
     def validate_pic_eleven(self, value):
@@ -699,8 +695,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of kernel colour must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of kernel colour must be between 300KB and 1MB')
 
     @validates('kernel_length_pic')
     def validate_pic_twelve(self, value):
@@ -713,8 +709,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of kernel length must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of kernel length must be between 300KB and 1MB')
 
     @validates('kernel_width_pic')
     def validate_pic_thirteen(self, value):
@@ -727,8 +723,8 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture of kernel width must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of kernel width must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -776,8 +772,8 @@ class EcoRegionUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Eco region image must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Eco region image must be between 300KB and 1MB')
 
     @validates('eco_region_link')
     def validate_eco_region_link(self, value):
@@ -803,8 +799,8 @@ class EcoRegionUpload(Schema):
 
 class CulinaryUpload(Schema):
     g_v_id = fields.Str(required=True)
-    about = fields.Str(required=True)
-    recipe = fields.Str(required=True)
+    recipe = fields.Raw(required=True)
+    about = fields.Raw(required=True)
     pic_one = fields.Raw(required=True)
     pic_two = fields.Raw(required=True)
     status = fields.Str(required=True)
@@ -826,19 +822,11 @@ class CulinaryUpload(Schema):
     def validate_about(self, value):
         if not value:
             raise ValidationError('About is required')
-        elif len(re.findall(r'\b\w+\b', value)) < 5:
-            raise ValidationError('About must be at least 500 words')
-        elif len(re.findall(r'\b\w+\b', value)) > 10:
-            raise ValidationError('About must not exceed 600 words')
 
     @validates('recipe')
     def validate_recipe(self, value):
         if not value:
             raise ValidationError('Recipe is required')
-        elif len(re.findall(r'\b\w+\b', value)) < 5:
-            raise ValidationError('Recipe must be at least 500 words')
-        elif len(re.findall(r'\b\w+\b', value)) > 10:
-            raise ValidationError('Recipe must not exceed 600 words')
 
     @validates('pic_one')
     def validate_pic_one(self, value):
@@ -852,8 +840,8 @@ class CulinaryUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture one must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture one must be between 300KB and 1MB')
 
     @validates('pic_two')
     def validate_pic_two(self, value):
@@ -867,8 +855,8 @@ class CulinaryUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Picture two must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture two must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -923,7 +911,7 @@ class AgronomyUpload(Schema):
         if not value:
             raise ValidationError('Seedbed preparation weeding is required')
         elif len(re.findall(r'\b\w+\b', value)) < 5:
-            raise ValidationError('Seedbed preparation must be at least 500 words')
+            raise ValidationError('Seedbed preparation must be at least 1024 words')
         elif len(re.findall(r'\b\w+\b', value)) > 10:
             raise ValidationError('Seedbed preparation must not exceed 600 words')
 
@@ -974,8 +962,8 @@ class AgronomyUpload(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Seedbed preparation picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Seedbed preparation picture must be between 300KB and 1MB')
 
     @validates('seed_broadcast_pic')
     def validate_seed_broadcast_pic(self, value):
@@ -988,8 +976,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Seed broadcast picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Seed broadcast picture must be between 300KB and 1MB')
 
     @validates('field_preparation_weeding_pic')
     def validate_field_preparation_weeding_pic(self, value):
@@ -1002,8 +990,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Field preparation weeding picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Field preparation weeding picture must be between 300KB and 1MB')
 
     @validates('transplantation_pic')
     def validate_transplantation_pic(self, value):
@@ -1016,8 +1004,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Transplantation picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Transplantation picture must be between 300KB and 1MB')
 
     @validates('tillering_starts_pic')
     def validate_tillering_starts_pic(self, value):
@@ -1030,8 +1018,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Tillering starts picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Tillering starts picture must be between 300KB and 1MB')
 
     @validates('weeding_phase_two_pic')
     def validate_weeding_phase_two_pic(self, value):
@@ -1044,8 +1032,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Weeding phase two picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Weeding phase two picture must be between 300KB and 1MB')
 
     @validates('flowering_pic')
     def validate_flowering_pic(self, value):
@@ -1058,8 +1046,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Flowering picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Flowering picture must be between 300KB and 1MB')
 
     @validates('harvest_pic')
     def validate_harvest_pic(self, value):
@@ -1072,8 +1060,8 @@ class AgronomyUpload(Schema):
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 500 * 1024):
-            raise ValidationError('Harvest picture must be between 300KB and 500KB')
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Harvest picture must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):

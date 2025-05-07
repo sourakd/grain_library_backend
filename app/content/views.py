@@ -24,7 +24,7 @@ class StoryUpload(MethodView):
             if db is not None:
                 db1 = db["content"]
                 data = dict(request.form)
-                story = data["story"]
+                story = data.get("story", [])
                 g_v_id = data["g_v_id"].lower()
                 conserved_by = data["conserved_by"].lower()
                 pic_one = request.files.get("pic_one")
@@ -556,8 +556,8 @@ class CulinaryUpload(MethodView):
                 db1 = db["content"]
                 data = dict(request.form)
                 g_v_id = data["g_v_id"]
-                about = data["about"]
-                recipe = data["recipe"]
+                recipe = data.get("recipe", [])
+                about = data.get("about", [])
                 pic_one = request.files.get("pic_one")
                 pic_two = request.files.get("pic_two")
 

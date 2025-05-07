@@ -52,11 +52,8 @@ class EmployeeRegistrationSchema(Schema):
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if file_size > 500 * 1024:  # 500KB
-            raise ValidationError('Profile picture must be less than 500KB')
-
-        if file_size < 250 * 1024:  # 50KB
-            raise ValidationError('Profile picture must be greater than 300KB')
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Profile picture must be between 300KB and 500KB')
 
     @validates('id_proof')
     def validate_id_proof(self, value):
