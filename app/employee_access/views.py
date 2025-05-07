@@ -23,10 +23,10 @@ class EmployeeRegistration(MethodView):
             if db is not None:
                 db1 = db["employee_registration"]
                 data = dict(request.form)
-                employee_name = data["employee_name"].lower()
+                employee_name = data["employee_name"]
                 email_id = data["email_id"].lower()
                 type_id = data["type_id"].lower()
-                address = data["address"].lower()
+                address = data["address"]
                 id_proof = data["id_proof"].lower()
                 phone_number = data["phone_number"]
                 id_no = data["id_no"]

@@ -22,7 +22,7 @@ class AddGrain(MethodView):
             if db is not None:
                 db1 = db["grain"]
                 data = request.get_json()
-                grain = data['grain'].lower()
+                grain = data['grain']
 
                 if grain:
                     # Validate the data using the schema
@@ -83,7 +83,7 @@ class AddGrain(MethodView):
                 if db is not None:
                     db1 = db["grain"]
                     data = request.get_json()
-                    grain = data['grain'].lower()
+                    grain = data['grain']
                     grain_variant = data['grain_variant']
 
                     if grain and grain_variant:
@@ -222,7 +222,7 @@ class FetchAllGrainVariant(MethodView):
             if db is not None:
                 db1 = db["grain"]
                 data = request.get_json()
-                grain = data["grain"].lower()
+                grain = data["grain"]
 
                 if grain:
                     find_grain_variant = db1.find(

@@ -25,8 +25,8 @@ class StoryUpload(MethodView):
                 db1 = db["content"]
                 data = dict(request.form)
                 story = data.get("story", [])
-                g_v_id = data["g_v_id"].lower()
-                conserved_by = data["conserved_by"].lower()
+                g_v_id = data["g_v_id"]
+                conserved_by = data["conserved_by"]
                 pic_one = request.files.get("pic_one")
                 pic_two = request.files.get("pic_two")
                 pic_three = request.files.get("pic_three")
@@ -126,7 +126,7 @@ class PreHarvestMorphologyUpload(MethodView):
             if db is not None:
                 db1 = db["content"]
                 data = dict(request.form)
-                g_v_id = data["g_v_id"].lower()
+                g_v_id = data["g_v_id"]
                 plant_height = data["plant_height"]
                 aroma = data["aroma"]
                 culm_internode_colour = data["culm_internode_colour"]
@@ -286,20 +286,20 @@ class PostHarvestMorphologyUpload(MethodView):
             if db is not None:
                 db1 = db["content"]
                 data = dict(request.form)
-                g_v_id = data["g_v_id"].lower()
-                panicle_length = data["panicle_length"].lower()
-                panicle_threshability = data["panicle_threshability"].lower()
-                panicle_type = data["panicle_type"].lower()
-                awning_length = data["awning_length"].lower()
-                awning_colour = data["awning_colour"].lower()
-                grain_weight = data["grain_weight"].lower()
-                lemma_palea_colour = data["lemma_palea_colour"].lower()
-                lemma_palea_hair = data["lemma_palea_hair"].lower()
-                grain_length = data["grain_length"].lower()
-                grain_width = data["grain_width"].lower()
-                kernel_colour = data["kernel_colour"].lower()
-                kernel_length = data["kernel_length"].lower()
-                kernel_width = data["kernel_width"].lower()
+                g_v_id = data["g_v_id"]
+                panicle_length = data["panicle_length"]
+                panicle_threshability = data["panicle_threshability"]
+                panicle_type = data["panicle_type"]
+                awning_length = data["awning_length"]
+                awning_colour = data["awning_colour"]
+                grain_weight = data["grain_weight"]
+                lemma_palea_colour = data["lemma_palea_colour"]
+                lemma_palea_hair = data["lemma_palea_hair"]
+                grain_length = data["grain_length"]
+                grain_width = data["grain_width"]
+                kernel_colour = data["kernel_colour"]
+                kernel_length = data["kernel_length"]
+                kernel_width = data["kernel_width"]
                 panicle_length_pic = request.files.get("panicle_length_pic")
                 panicle_threshability_pic = request.files.get("panicle_threshability_pic")
                 panicle_type_pic = request.files.get("panicle_type_pic")
