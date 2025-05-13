@@ -910,10 +910,6 @@ class AgronomyUpload(Schema):
     def validate_seedbed_preparation(self, value):
         if not value:
             raise ValidationError('Seedbed preparation weeding is required')
-        elif len(re.findall(r'\b\w+\b', value)) < 5:
-            raise ValidationError('Seedbed preparation must be at least 1024 words')
-        elif len(re.findall(r'\b\w+\b', value)) > 10:
-            raise ValidationError('Seedbed preparation must not exceed 600 words')
 
     @validates('seed_broadcast')
     def validate_seed_broadcast(self, value):

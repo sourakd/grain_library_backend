@@ -16,15 +16,18 @@ class FetchGrain(MethodView):
             if db is not None:
                 db1 = db["grain_assign"]
                 find_grain = db1.find({"status": "active", "type_id": "grain_variant_assign"},
-                                      {"grain": 1})
+                                      {"grain": 1, "status": 1, "grain_pic": 1})
                 find_grain_list = list(find_grain)
 
-                if find_grain_list is not None:
+                if find_grain_list:
 
                     unique_grains = {}
 
                     for item in find_grain_list:
                         unique_grains[item["grain"]] = item
+                        unique_grains[item["grain"]]["grain_pic"] = db1.find_one(
+                            {"grain": unique_grains[item["grain"]]["grain"], "status": "active",
+                             "type_id": "grain_assign"}).get("grain_pic", "No picture added")
                         unique_grains[item["grain"]]["_id"] = str(item["_id"])
 
                     unique_grain_list = list(unique_grains.values())

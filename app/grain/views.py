@@ -8,7 +8,9 @@ from flask_cors import cross_origin
 from marshmallow.exceptions import ValidationError
 
 from app.grain.grain_validation import grain_registration_schema, grain_variant_registration_schema
+from app.helpers import S3Uploader
 from db_connection import start_and_check_mongo, database_connect_mongo, stop_and_check_mongo_status, conn
+from settings.configuration import S3Config
 
 grain_add = Blueprint('grain_add', __name__)
 
@@ -21,14 +23,15 @@ class AddGrain(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["grain"]
-                data = request.get_json()
+                data = dict(request.form)
                 grain = data['grain']
+                grain_pic = request.files.get('grain_pic')
 
-                if grain:
+                if grain and grain_pic:
                     # Validate the data using the schema
                     data = {"status": "active",
                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                            "grain": grain}
+                            "grain": grain, "grain_pic": grain_pic}
 
                     # Validate the data using the schema
                     try:
@@ -39,11 +42,25 @@ class AddGrain(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
+                        type_id = "grain"
+
                         # Update the updated_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
+                        s3_config = S3Config()
+                        bucket_status, total_files, all_folders = s3_config.connect_to_s3()
+                        s3_uploader = S3Uploader(s3_config)
+                        file_url = s3_uploader.upload_file(grain_pic, type_id=type_id, status="active")
+
+                        if s3_uploader.check_existing_file(file_url['file_url'], type_id):
+                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                            stop_and_check_mongo_status(conn)
+                            return make_response(jsonify(response)), 400
+
+                        validated_data["grain_pic"] = file_url
+
                         # Add type field
-                        validated_data["type_id"] = "grain"
+                        validated_data["type_id"] = type_id
 
                         db1.insert_one(validated_data)
 
@@ -74,67 +91,68 @@ class AddGrain(MethodView):
             stop_and_check_mongo_status(conn)
             return make_response(jsonify(response)), 400
 
-    class AddGrainVariant(MethodView):
-        @cross_origin(supports_credentials=True)
-        def post(self):
-            try:
-                start_and_check_mongo()
-                db = database_connect_mongo()
-                if db is not None:
-                    db1 = db["grain"]
-                    data = request.get_json()
-                    grain = data['grain']
-                    grain_variant = data['grain_variant']
 
-                    if grain and grain_variant:
-                        # Validate the data using the schema
-                        data = {"status": "active",
-                                "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
-                                "grain": grain, "grain_variant": grain_variant}
+class AddGrainVariant(MethodView):
+    @cross_origin(supports_credentials=True)
+    def post(self):
+        try:
+            start_and_check_mongo()
+            db = database_connect_mongo()
+            if db is not None:
+                db1 = db["grain"]
+                data = request.get_json()
+                grain = data['grain']
+                grain_variant = data['grain_variant']
 
-                        # Validate the data using the schema
-                        try:
-                            validated_data = grain_variant_registration_schema.load(data)
-                        except ValidationError as err:
-                            response = {"message": err.messages, "status": "val_error"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
+                if grain and grain_variant:
+                    # Validate the data using the schema
+                    data = {"status": "active",
+                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "updated_at": None,
+                            "grain": grain, "grain_variant": grain_variant}
 
-                        else:
-                            # Update the updated_at field
-                            validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-                            # Add type field
-                            validated_data["type_id"] = "grain_variant"
-
-                            db1.insert_one(validated_data)
-
-                            # Extract the _id value
-                            validated_data["_id"] = str(validated_data["_id"])
-
-                            # Create the response
-                            response = {"message": "Grain variant added successfully", "status": "success",
-                                        "data": validated_data}
-                            stop_and_check_mongo_status(conn)
-
-                            # Return the response
-                            return make_response(jsonify(response)), 200
-
-                    else:
-                        response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    # Validate the data using the schema
+                    try:
+                        validated_data = grain_variant_registration_schema.load(data)
+                    except ValidationError as err:
+                        response = {"message": err.messages, "status": "val_error"}
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
+
+                    else:
+                        # Update the updated_at field
+                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
+                        # Add type field
+                        validated_data["type_id"] = "grain_variant"
+
+                        db1.insert_one(validated_data)
+
+                        # Extract the _id value
+                        validated_data["_id"] = str(validated_data["_id"])
+
+                        # Create the response
+                        response = {"message": "Grain variant added successfully", "status": "success",
+                                    "data": validated_data}
+                        stop_and_check_mongo_status(conn)
+
+                        # Return the response
+                        return make_response(jsonify(response)), 200
+
                 else:
-                    response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
+                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400
-
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-                response = {"status": 'val_error', "message": f'{str(e)}'}
+            else:
+                response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            response = {"status": 'val_error', "message": f'{str(e)}'}
+            stop_and_check_mongo_status(conn)
+            return make_response(jsonify(response)), 400
 
 
 class FetchAllGrain(MethodView):
@@ -146,7 +164,7 @@ class FetchAllGrain(MethodView):
             if db is not None:
                 db1 = db["grain"]
                 find_grain = db1.find({"status": {"$ne": "delete"}, "type_id": "grain"},
-                                      {"grain": 1, "status": 1}).sort("status", 1)
+                                      {"grain": 1, "status": 1, "grain_pic": 1}).sort("grain", 1)
                 find_grain_list = list(find_grain)
                 total_grain = db1.count_documents({"status": "active", "type_id": "grain"})
 
@@ -537,6 +555,7 @@ class AssignGrain(MethodView):
 
                     find_grain = db1.find_one({"_id": ObjectId(g_id), "status": "active"})
                     grain_name = find_grain["grain"]
+                    grain_pic = find_grain["grain_pic"]
 
                     find_location = db2.find_one({"_id": ObjectId(loc_id), "status": "active"})
                     location_name = find_location["location"]
@@ -555,6 +574,7 @@ class AssignGrain(MethodView):
                         else:
 
                             db3.insert_one({"grain": grain_name, "country": location_name, "status": "active",
+                                            "grain_pic": grain_pic,
                                             "type_id": "grain_assign", "g_id": g_id, "loc_id": loc_id,
                                             "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                             "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
@@ -1122,7 +1142,7 @@ class FetchAllGrainVariantBaseOnRegion(MethodView):
 
 
 grain_add_view = AddGrain.as_view('grain_add_view')
-grain_variant_add_view = AddGrain.AddGrainVariant.as_view('grain_variant_add_view')
+grain_variant_add_view = AddGrain.as_view('grain_variant_add_view')
 grain_fetch_view = FetchAllGrain.as_view('grain_fetch_view')
 grain_variant_fetch_view = FetchAllGrainVariant.as_view('grain_fetch_variant_view')
 g_status_change = GStatusChange.as_view('g_status')
