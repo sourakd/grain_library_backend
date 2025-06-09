@@ -749,6 +749,7 @@ class EcoRegionUpload(Schema):
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
+    ec_details = fields.Str(required=True)
 
     @validates('g_v_id')
     def validate_g_v_id(self, value):
@@ -795,6 +796,17 @@ class EcoRegionUpload(Schema):
             raise ValidationError('Type ID is required')
         if value != "eco_region":
             raise ValidationError('Type ID must be eco_region')
+
+    @validates('ec_details')
+    def validate_ec_details(self, value):
+        if not value:
+            raise ValidationError('Eco region details is required')
+        # if not re.match(r'^\s*(\w+\s+){20,30}$', value):
+        #     raise ValidationError('Eco region details must be between 20 and 30 words')
+        word_count = len(re.findall(r'\b\w+\b', value))
+        if word_count < 20 or word_count > 30:
+            raise ValidationError('Eco region details must be between 20 and 30 words')
+
 
 
 class CulinaryUpload(Schema):
@@ -875,20 +887,16 @@ class CulinaryUpload(Schema):
 
 class AgronomyUpload(Schema):
     g_v_id = fields.Str(required=True)
-    seedbed_preparation_weeding = fields.Str(required=True)
-    seed_broadcast = fields.Str(required=True)
+    day_of_seed_sowing = fields.Str(required=True)
     field_preparation_weeding = fields.Str(required=True)
     transplantation = fields.Str(required=True)
     tillering_starts = fields.Str(required=True)
-    weeding_phase_two = fields.Str(required=True)
     flowering = fields.Str(required=True)
     harvest = fields.Str(required=True)
-    seedbed_preparation_pic = fields.Raw(required=True)
-    seed_broadcast_pic = fields.Raw(required=True)
+    day_of_seed_sowing_pic = fields.Raw(required=True)
     field_preparation_weeding_pic = fields.Raw(required=True)
     transplantation_pic = fields.Raw(required=True)
     tillering_starts_pic = fields.Raw(required=True)
-    weeding_phase_two_pic = fields.Raw(required=True)
     flowering_pic = fields.Raw(required=True)
     harvest_pic = fields.Raw(required=True)
     status = fields.Str(required=True)
@@ -906,15 +914,10 @@ class AgronomyUpload(Schema):
         if not find_grain_variant:
             raise ValidationError('Grain variant not found')
 
-    @validates('seedbed_preparation_weeding')
-    def validate_seedbed_preparation(self, value):
+    @validates('day_of_seed_sowing')
+    def day_of_seed_sowing(self, value):
         if not value:
             raise ValidationError('Seedbed preparation weeding is required')
-
-    @validates('seed_broadcast')
-    def validate_seed_broadcast(self, value):
-        if not value:
-            raise ValidationError('Seed broadcast is required')
 
     @validates('field_preparation_weeding')
     def validate_field_preparation_weeding(self, value):
@@ -931,11 +934,6 @@ class AgronomyUpload(Schema):
         if not value:
             raise ValidationError('Tillering starts is required')
 
-    @validates('weeding_phase_two')
-    def validate_weeding_phase_two(self, value):
-        if not value:
-            raise ValidationError('Weeding phase two is required')
-
     @validates('flowering')
     def validate_flowering(self, value):
         if not value:
@@ -946,34 +944,20 @@ class AgronomyUpload(Schema):
         if not value:
             raise ValidationError('Harvest is required')
 
-    @validates('seedbed_preparation_pic')
+    @validates('day_of_seed_sowing_pic')
     def validate_seedbed_preparation_pic(self, value):
         if not value:
-            raise ValidationError('Seedbed preparation picture is required')
+            raise ValidationError('Day of seed sowing picture is required')
         if not isinstance(value, File):
-            raise ValidationError('Seedbed preparation picture must be a file')
+            raise ValidationError('Day of seed sowing picture must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Seedbed preparation picture must be a JPEG, JPG or PNG file')
+            raise ValidationError('Day of seed sowing picture must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
         if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Seedbed preparation picture must be between 300KB and 1MB')
-
-    @validates('seed_broadcast_pic')
-    def validate_seed_broadcast_pic(self, value):
-        if not value:
-            raise ValidationError('Seed broadcast picture is required')
-        if not isinstance(value, File):
-            raise ValidationError('Seed broadcast picture must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Seed broadcast picture must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Seed broadcast picture must be between 300KB and 1MB')
+            raise ValidationError('Day of seed sowing picture must be between 300KB and 1MB')
 
     @validates('field_preparation_weeding_pic')
     def validate_field_preparation_weeding_pic(self, value):
@@ -1016,20 +1000,6 @@ class AgronomyUpload(Schema):
         value.seek(0)  # Seek back to the beginning of the file
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Tillering starts picture must be between 300KB and 1MB')
-
-    @validates('weeding_phase_two_pic')
-    def validate_weeding_phase_two_pic(self, value):
-        if not value:
-            raise ValidationError('Weeding phase two picture is required')
-        if not isinstance(value, File):
-            raise ValidationError('Weeding phase two picture must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Weeding phase two picture must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Weeding phase two picture must be between 300KB and 1MB')
 
     @validates('flowering_pic')
     def validate_flowering_pic(self, value):
