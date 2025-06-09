@@ -157,6 +157,12 @@ class PreHarvestMorphologyUpload(MethodView):
                     status = "pending"
                     type_id = "pre_harvest_morphology"
 
+                    # Check if the story is approved
+                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     # Check if the pre harvest morphology already exists
                     existing_pre_harvest_morphology = db1.find_one(
                         {"type_id": "pre_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
@@ -319,6 +325,12 @@ class PostHarvestMorphologyUpload(MethodView):
                     status = "pending"
                     type_id = "post_harvest_morphology"
 
+                    # Check if the story is approved
+                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     # Check if the post harvest morphology already exists
                     existing_post_harvest_morphology = db1.find_one(
                         {"type_id": "post_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
@@ -472,17 +484,23 @@ class EcoRegionUpload(MethodView):
                     status = "pending"
                     type_id = "eco_region"
 
-                    # Check if the eco-region already exists
+                    # Check if the story is approved
+                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
+                    # Check if the eco region already exists
                     existing_eco_region = db1.find_one(
                         {"type_id": "eco_region", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
                     if existing_eco_region:
                         response = {"message": {"Details": ["Eco Region already exists"]},
                                     "status": "val_error"}
+
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
 
                     # Prepare the data to be inserted into the database
-                    eco_region_img_url = ""
                     data = {
                         "eco_region_img": eco_region_img,
                         "eco_region_link": eco_region_link,
@@ -564,6 +582,13 @@ class CulinaryUpload(MethodView):
                 if g_v_id and about and recipe and pic_one and pic_two:
                     status = "pending"
                     type_id = "culinary"
+
+                    # Check if the story is approved
+                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     # Check if the culinary already exists
                     existing_culinary = db1.find_one(
                         {"type_id": "culinary", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
@@ -678,6 +703,13 @@ class AgronomyUpload(MethodView):
 
                     status = "pending"
                     type_id = "agronomy"
+
+                    # Check if the story is approved
+                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+
                     # Check if the agronomy already exists
                     existing_agronomy = db1.find_one(
                         {"type_id": "agronomy", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
