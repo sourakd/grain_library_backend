@@ -73,6 +73,10 @@ class GrainVariantRegistrationSchema(Schema):
     #     if not re.match(name_check, data["grain_variant"]):
     #         raise ValidationError({"grain_variant": [ALPHABET_ERROR_MESSAGE]})
 
+
+class GrainVariantPicSchema(Schema):
+    gv_pic = fields.Raw(required=True)
+
     @validates('gv_pic')
     def validate_gv_pic(self, value):
         if not value:
@@ -92,3 +96,4 @@ class GrainVariantRegistrationSchema(Schema):
 
 grain_registration_schema = GrainRegistrationSchema()
 grain_variant_registration_schema = GrainVariantRegistrationSchema()
+grain_variant_pic_schema = GrainVariantPicSchema()
