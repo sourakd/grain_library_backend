@@ -50,16 +50,44 @@ class GrainVariantRegistrationSchema(Schema):
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     grain = fields.Str(required=True)
     grain_variant = fields.Str(required=True)
+    gv_pic = fields.Raw(required=True)
 
     @validates_schema()
-    def validate_grain_variant(self, data, **kwargs):
+    def validate_grain_variant(self, validates_fields, **kwargs):
         db = database_connect_mongo()
         db1 = db["grain"]
-        if db1.count_documents({"grain": data['grain'], "grain_variant": data['grain_variant']}):
+        if db1.count_documents(
+                {"grain": validates_fields['grain'], "grain_variant": validates_fields['grain_variant']}):
             raise ValidationError({"grain_variant": ["This variant already added under this grain"]})
 
-        if not re.match(name_check, data["grain_variant"]):
+        if not re.match(name_check, validates_fields["grain_variant"]):
             raise ValidationError({"grain_variant": [ALPHABET_ERROR_MESSAGE]})
+
+    # @validates('grain_variant')
+    # def validate_grain_variant(self, data):
+    #     db = database_connect_mongo()
+    #     db1 = db["grain"]
+    #     if db1.count_documents({"grain": data['grain'], "grain_variant": data['grain_variant']}):
+    #         raise ValidationError({"grain_variant": ["This variant already added under this grain"]})
+    #
+    #     if not re.match(name_check, data["grain_variant"]):
+    #         raise ValidationError({"grain_variant": [ALPHABET_ERROR_MESSAGE]})
+
+    @validates('gv_pic')
+    def validate_gv_pic(self, value):
+        if not value:
+            raise ValidationError('Picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture must be a JPEG, JPG or PNG file')
+
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+
+        if not (300 * 1024 <= file_size <= 500 * 1024):
+            raise ValidationError('Picture must be between 300KB and 1MB')
 
 
 grain_registration_schema = GrainRegistrationSchema()

@@ -941,22 +941,48 @@ class AssignGrainVariant(MethodView):
             if db is not None:
                 db1 = db["location"]
                 db3 = db["grain_assign"]
-                data = request.get_json()
+                data = dict(request.form)
                 c_id = data["c_id"]
                 r_id = data["r_id"]
                 g_a_id = data["g_a_id"]
                 grain_variant = data["grain_variant"]
+                gv_pic = request.files.get("gv_pic")
 
-                if c_id and r_id and g_a_id:
+                if c_id and r_id and g_a_id and grain_variant:
 
                     find_country = db1.find_one({"_id": ObjectId(c_id), "status": "active", "type_id": "country"})
-                    country_name = find_country["location"]
+                    if not find_country:
+                        response = {"message": {"Details": ["Country not found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+                    country_name = find_country.get("location", "None")
 
                     find_region = db1.find_one({"_id": ObjectId(r_id), "status": "active", "type_id": "region"})
-                    region_name = find_region["location"]
+                    if not find_region:
+                        response = {"message": {"Details": ["Region not found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+                    region_name = find_region.get("location", "None")
 
                     find_grain = db3.find_one({"_id": ObjectId(g_a_id), "status": "active", "type_id": "grain_assign"})
-                    grain_name = find_grain["grain"]
+                    if not find_grain:
+                        response = {"message": {"Details": ["Grain not found"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+                    grain_name = find_grain.get("grain", "None")
+
+                    validates_fields = {"grain": grain_name, "grain_variant": grain_variant, "gv_pic": gv_pic,
+                                        "status": "active",
+                                        "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+                    try:
+                        validate_data = grain_variant_registration_schema.load(validates_fields)
+
+                    except ValidationError as err:
+                        response = {"message": err.messages, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
 
                     if find_country and find_region and find_grain:
 
@@ -964,7 +990,7 @@ class AssignGrainVariant(MethodView):
                             {"grain": grain_name, "country": country_name, "region": region_name,
                              "grain_variant": grain_variant, "status": {"$ne": "delete"}})
 
-                        if grain_variant_assign is not None:
+                        if grain_variant_assign:
 
                             response = {"status": 'val_error',
                                         "message": {"Details": ["Grain variant already assigned"]}}
@@ -972,14 +998,40 @@ class AssignGrainVariant(MethodView):
                             return make_response(jsonify(response)), 400
 
                         else:
+                            type_id = "grain_variant_assign"
 
-                            db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
-                                            "grain_variant": grain_variant, "status": "active",
-                                            "approve_status": "pending", "emp_assign": "false",
-                                            "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
-                                            "g_a_id": g_a_id,
-                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+                            # if gv_pic and not allowed_file(gv_pic.filename):
+                            #     response = {"message": {"File": ["File type not allowed"]}, "status": "val_error"}
+                            #     stop_and_check_mongo_status(conn)
+                            #     return make_response(jsonify(response)), 400
+
+                            s3_config = S3Config()
+                            s3_uploader = S3Uploader(s3_config)
+                            file_url = s3_uploader.upload_file(gv_pic, type_id=type_id, status="active")
+
+                            if s3_uploader.check_existing_file(file_url['file_url'], type_id):
+                                response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                                stop_and_check_mongo_status(conn)
+                                return make_response(jsonify(response)), 400
+
+                            validate_data["type_id"] = type_id
+                            validate_data["approve_status"] = "pending"
+                            validate_data["emp_assign"] = "false"
+                            validate_data["country"] = country_name
+                            validate_data["region"] = region_name
+                            validate_data["c_id"] = c_id
+                            validate_data["r_id"] = r_id
+                            validate_data["g_a_id"] = g_a_id
+
+                            db3.insert_one(validate_data)
+
+                            # db3.insert_one({"grain": grain_name, "country": country_name, "region": region_name,
+                            #                 "grain_variant": grain_variant, "status": "active",
+                            #                 "approve_status": "pending", "emp_assign": "false",
+                            #                 "type_id": "grain_variant_assign", "c_id": c_id, "r_id": r_id,
+                            #                 "g_a_id": g_a_id,
+                            #                 "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            #                 "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
                             response = {"status": "success",
                                         "message": f"{grain_variant} assigned to {region_name} successfully"}
