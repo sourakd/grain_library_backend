@@ -26,6 +26,7 @@ class AddGrain(MethodView):
                 data = dict(request.form)
                 grain = data['grain']
                 grain_pic = request.files.get('grain_pic')
+                # print(grain_pic, "1")
 
                 if grain and grain_pic:
                     # Validate the data using the schema
@@ -946,9 +947,16 @@ class AssignGrainVariant(MethodView):
                 r_id = data["r_id"]
                 g_a_id = data["g_a_id"]
                 grain_variant = data["grain_variant"]
-                gv_pic = request.files.get("gv_pic")
+                gv_pic = request.files.get("gv_pic", None)
+                # print(gv_pic)
+                #
+                # if gv_pic and c_id and r_id and g_a_id and grain_variant:
+                #     print(gv_pic)
+                #
+                # else:
+                #     print("else")
 
-                if not c_id and not r_id and not g_a_id and not grain_variant and not gv_pic:
+                if not c_id and not r_id and not g_a_id and not grain_variant and gv_pic == "":
                     response = {"message": {"Details": ["Please enter all details"]}, "status": "val_error"}
                     stop_and_check_mongo_status(conn)
                     return make_response(jsonify(response)), 400

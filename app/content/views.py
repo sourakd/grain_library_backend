@@ -479,9 +479,9 @@ class EcoRegionUpload(MethodView):
                 eco_region_img = request.files.get("eco_region_img")
                 eco_region_link = data["eco_region_link"]
                 g_v_id = data["g_v_id"]
-                ec_details = data["ec_details"]
+                er_details = data["ec_details"]
 
-                if eco_region_img and eco_region_link and g_v_id and ec_details:
+                if eco_region_img and eco_region_link and g_v_id and er_details:
                     status = "pending"
                     type_id = "eco_region"
 
@@ -510,7 +510,7 @@ class EcoRegionUpload(MethodView):
                         "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                         "updated_at": None,
                         "type_id": type_id,
-                        "ec_details": ec_details
+                        "er_details": er_details
                     }
                     try:
                         validated_data = EcoRegionUploadSchema.load(data)
@@ -576,12 +576,11 @@ class CulinaryUpload(MethodView):
                 db1 = db["content"]
                 data = dict(request.form)
                 g_v_id = data["g_v_id"]
-                recipe = data.get("recipe", [])
-                about = data.get("about", [])
+                culinary = data.get("culinary", [])
                 pic_one = request.files.get("pic_one")
                 pic_two = request.files.get("pic_two")
 
-                if g_v_id and about and recipe and pic_one and pic_two:
+                if g_v_id and culinary and pic_one and pic_two:
                     status = "pending"
                     type_id = "culinary"
 
@@ -605,8 +604,7 @@ class CulinaryUpload(MethodView):
                     pic_two_url = ""
                     data = {
                         "g_v_id": g_v_id,
-                        "about": about,
-                        "recipe": recipe,
+                        "culinary": culinary,
                         "pic_one": pic_one,
                         "pic_two": pic_two,
                         "status": status,
@@ -690,6 +688,7 @@ class AgronomyUpload(MethodView):
                 tillering_starts = data["tillering_starts"]
                 flowering = data["flowering"]
                 harvest = data["harvest"]
+                observed_at = data["observed_at"]
                 day_of_seed_sowing_pic = request.files.get("day_of_seed_sowing_pic")
                 field_preparation_weeding_pic = request.files.get("field_preparation_weeding_pic")
                 transplantation_pic = request.files.get("transplantation_pic")
@@ -697,7 +696,7 @@ class AgronomyUpload(MethodView):
                 flowering_pic = request.files.get("flowering_pic")
                 harvest_pic = request.files.get("harvest_pic")
 
-                if g_v_id and day_of_seed_sowing and field_preparation_weeding and transplantation and tillering_starts and flowering and harvest and day_of_seed_sowing_pic and field_preparation_weeding_pic and transplantation_pic and tillering_starts_pic and flowering_pic and harvest_pic:
+                if g_v_id and observed_at and day_of_seed_sowing and field_preparation_weeding and transplantation and tillering_starts and flowering and harvest and day_of_seed_sowing_pic and field_preparation_weeding_pic and transplantation_pic and tillering_starts_pic and flowering_pic and harvest_pic:
 
                     status = "pending"
                     type_id = "agronomy"
@@ -730,6 +729,7 @@ class AgronomyUpload(MethodView):
                         "tillering_starts": tillering_starts,
                         "flowering": flowering,
                         "harvest": harvest,
+                        "observed_at": observed_at,
                         "day_of_seed_sowing_pic": day_of_seed_sowing_pic,
                         "field_preparation_weeding_pic": field_preparation_weeding_pic,
                         "transplantation_pic": transplantation_pic,

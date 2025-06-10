@@ -749,7 +749,7 @@ class EcoRegionUpload(Schema):
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
-    ec_details = fields.Str(required=True)
+    er_details = fields.Str(required=True)
 
     @validates('g_v_id')
     def validate_g_v_id(self, value):
@@ -797,7 +797,7 @@ class EcoRegionUpload(Schema):
         if value != "eco_region":
             raise ValidationError('Type ID must be eco_region')
 
-    @validates('ec_details')
+    @validates('er_details')
     def validate_ec_details(self, value):
         if not value:
             raise ValidationError('Eco region details is required')
@@ -808,13 +808,11 @@ class EcoRegionUpload(Schema):
             raise ValidationError('Eco region details must be between 20 and 30 words')
 
 
-
 class CulinaryUpload(Schema):
     g_v_id = fields.Str(required=True)
-    recipe = fields.Raw(required=True)
-    about = fields.Raw(required=True)
+    culinary = fields.Raw(required=True)
     pic_one = fields.Raw(required=True)
-    pic_two = fields.Raw(required=True)
+    pic_two = fields.Raw(required=False)
     status = fields.Str(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
@@ -830,15 +828,10 @@ class CulinaryUpload(Schema):
         if not find_grain_variant:
             raise ValidationError('Grain variant not found')
 
-    @validates('about')
-    def validate_about(self, value):
-        if not value:
-            raise ValidationError('About is required')
-
-    @validates('recipe')
+    @validates('culinary')
     def validate_recipe(self, value):
         if not value:
-            raise ValidationError('Recipe is required')
+            raise ValidationError('Culinary is required')
 
     @validates('pic_one')
     def validate_pic_one(self, value):
@@ -893,6 +886,7 @@ class AgronomyUpload(Schema):
     tillering_starts = fields.Str(required=True)
     flowering = fields.Str(required=True)
     harvest = fields.Str(required=True)
+    observed_at = fields.Str(required=True)
     day_of_seed_sowing_pic = fields.Raw(required=True)
     field_preparation_weeding_pic = fields.Raw(required=True)
     transplantation_pic = fields.Raw(required=True)
@@ -917,32 +911,59 @@ class AgronomyUpload(Schema):
     @validates('day_of_seed_sowing')
     def day_of_seed_sowing(self, value):
         if not value:
-            raise ValidationError('Seedbed preparation weeding is required')
+            raise ValidationError('Day of seed sowing is required')
+
+        if not value.isdigit():
+            raise ValidationError('Day of seed sowing must be a numeric value')
 
     @validates('field_preparation_weeding')
     def validate_field_preparation_weeding(self, value):
         if not value:
             raise ValidationError('Field preparation weeding is required')
 
+        if not value.isdigit():
+            raise ValidationError('Field preparation weeding must be a numeric value')
+
     @validates('transplantation')
     def validate_transplantation(self, value):
         if not value:
             raise ValidationError('Transplantation is required')
+
+        if not value.isdigit():
+            raise ValidationError('Transplantation must be a numeric value')
 
     @validates('tillering_starts')
     def validate_tillering_starts(self, value):
         if not value:
             raise ValidationError('Tillering starts is required')
 
+        if not value.isdigit():
+            raise ValidationError('Tillering starts must be a numeric value')
+
     @validates('flowering')
     def validate_flowering(self, value):
         if not value:
             raise ValidationError('Flowering is required')
 
+        if not value.isdigit():
+            raise ValidationError('Flowering must be a numeric value')
+
     @validates('harvest')
     def validate_harvest(self, value):
         if not value:
             raise ValidationError('Harvest is required')
+
+        if not value.isdigit():
+            raise ValidationError('Harvest must be a numeric value')
+
+    @validates('observed_at')
+    def validate_observed_at(self, value):
+        if not value:
+            raise ValidationError('Observed at is required')
+
+        word_count = len(re.findall(r'\b\w+\b', value))
+        if word_count < 30 or word_count > 50:
+            raise ValidationError('Observed at must be between 30 and 50 words')
 
     @validates('day_of_seed_sowing_pic')
     def validate_seedbed_preparation_pic(self, value):
