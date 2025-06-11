@@ -103,29 +103,39 @@ class StoryUpload(Schema):
 class PreHarvestMorphologyUpload(Schema):
     g_v_id = fields.Str(required=True)
     plant_height = fields.Str(required=True)
-    aroma = fields.Str(required=True)
     culm_internode_colour = fields.Str(required=True)
     leaf_blade_colour = fields.Str(required=True)
-    leaf_blade_pubescence = fields.Str(required=True)
+    leaf_blade_length = fields.Str(required=False)
+    leaf_blade_width = fields.Str(required=True)
     flag_leaf_angle = fields.Str(required=True)
-    flag_leaf_length = fields.Str(required=True)
-    flag_leaf_width = fields.Str(required=True)
     ligule_shape = fields.Str(required=True)
+    ligule_length = fields.Str(required=True)
     ligule_colour = fields.Str(required=True)
+    collar_colour = fields.Str(required=True)
+    panicle_length = fields.Str(required=True)
+    panicle_axis = fields.Str(required=True)
+    panicle_type = fields.Str(required=True)
+    panicle_exertion = fields.Str(required=True)
+
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
     status = fields.Str(required=True)
+
     plant_height_pic = fields.Raw(required=True)
-    aroma_pic = fields.Raw(required=True)
     culm_internode_colour_pic = fields.Raw(required=True)
     leaf_blade_colour_pic = fields.Raw(required=True)
-    leaf_blade_pubescence_pic = fields.Raw(required=True)
+    leaf_blade_length_pic = fields.Raw(required=True)
+    leaf_blade_width_pic = fields.Raw(required=True)
     flag_leaf_angle_pic = fields.Raw(required=True)
-    flag_leaf_length_pic = fields.Raw(required=True)
-    flag_leaf_width_pic = fields.Raw(required=True)
     ligule_shape_pic = fields.Raw(required=True)
+    ligule_length_pic = fields.Raw(required=True)
     ligule_colour_pic = fields.Raw(required=True)
+    collar_colour_pic = fields.Raw(required=True)
+    panicle_length_pic = fields.Raw(required=True)
+    panicle_axis_pic = fields.Raw(required=True)
+    panicle_type_pic = fields.Raw(required=True)
+    panicle_exertion_pic = fields.Raw(required=True)
 
     @validates('g_v_id')
     def validate_g_v_id(self, value):
@@ -143,17 +153,22 @@ class PreHarvestMorphologyUpload(Schema):
             raise ValidationError('Plant height is required')
         if not isinstance(value, str):
             raise ValidationError('Plant height must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Plant height must contain only numeric characters and up to 2 decimal places')
 
-    @validates('aroma')
-    def validate_aroma(self, value):
-        if not value:
-            raise ValidationError('Aroma is required')
-        if not isinstance(value, str):
-            raise ValidationError('Aroma must be a string')
-        if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Aroma must contain only alphabets and spaces')
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Plant height must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in plant height')
 
     @validates('culm_internode_colour')
     def validate_culm_internode_colour(self, value):
@@ -173,14 +188,51 @@ class PreHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Leaf blade colour must contain only alphabets and spaces')
 
-    @validates('leaf_blade_pubescence')
-    def validate_leaf_blade_pubescence(self, value):
+    @validates('leaf_blade_length')
+    def validate_leaf_blade_length(self, value):
         if not value:
-            raise ValidationError('Leaf blade pubescence is required')
+            raise ValidationError('Leaf blade length is required')
         if not isinstance(value, str):
-            raise ValidationError('Leaf blade pubescence must be a string')
-        if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Leaf blade pubescence must contain only alphabets and spaces')
+            raise ValidationError('Leaf blade length must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Leaf blade length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Leaf blade length')
+
+    @validates('leaf_blade_width')
+    def validate_leaf_blade_width(self, value):
+        if not value:
+            raise ValidationError('Leaf blade width is required')
+        if not isinstance(value, str):
+            raise ValidationError('Leaf blade width must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Leaf blade width must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Leaf blade width')
 
     @validates('flag_leaf_angle')
     def validate_flag_leaf_angle(self, value):
@@ -191,23 +243,28 @@ class PreHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Flag leaf angle must contain only alphabets and spaces')
 
-    @validates('flag_leaf_length')
-    def validate_flag_leaf_length(self, value):
+    @validates('ligule_length')
+    def validate_ligule_length(self, value):
         if not value:
-            raise ValidationError('Flag leaf length is required')
+            raise ValidationError('Ligule length is required')
         if not isinstance(value, str):
-            raise ValidationError('Flag leaf length must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Flag leaf length must contain only numeric characters and up to 2 decimal places')
+            raise ValidationError('Ligule length must be a string')
 
-    @validates('flag_leaf_width')
-    def validate_flag_leaf_width(self, value):
-        if not value:
-            raise ValidationError('Flag leaf width is required')
-        if not isinstance(value, str):
-            raise ValidationError('Flag leaf width must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Flag leaf width must contain only numeric characters and up to 2 decimal places')
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Ligule length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Ligule length')
 
     @validates('ligule_shape')
     def validate_ligule_shape(self, value):
@@ -227,6 +284,65 @@ class PreHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Ligule colour must contain only alphabets and spaces')
 
+    @validates('collar_colour')
+    def validate_collar_colour(self, value):
+        if not value:
+            raise ValidationError('Collar colour is required')
+        if not isinstance(value, str):
+            raise ValidationError('Collar colour must be a string')
+        if not re.match(r'^[a-zA-Z\s]+$', value):
+            raise ValidationError('Collar colour must contain only alphabets and spaces')
+
+    @validates('panicle_length')
+    def validate_panicle_length(self, value):
+        if not value:
+            raise ValidationError('Panicle length is required')
+        if not isinstance(value, str):
+            raise ValidationError('Panicle length must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Panicle length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Panicle length')
+
+    @validates('panicle_axis')
+    def validate_panicle_axis(self, value):
+        if not value:
+            raise ValidationError('Panicle axis is required')
+        if not isinstance(value, str):
+            raise ValidationError('Panicle axis must be a string')
+        if not re.match(r'^[a-zA-Z\s]+$', value):
+            raise ValidationError('Panicle axis must contain only alphabets and spaces')
+
+    @validates('panicle_type')
+    def validate_panicle_type(self, value):
+        if not value:
+            raise ValidationError('Panicle type is required')
+        if not isinstance(value, str):
+            raise ValidationError('Panicle type must be a string')
+        if not re.match(r'^[a-zA-Z\s]+$', value):
+            raise ValidationError('Panicle type must contain only alphabets and spaces')
+
+    @validates('panicle_exertion')
+    def validate_panicle_exertion(self, value):
+        if not value:
+            raise ValidationError('Panicle exertion is required')
+        if not isinstance(value, str):
+            raise ValidationError('Panicle exertion must be a string')
+        if not re.match(r'^[a-zA-Z\s]+$', value):
+            raise ValidationError('Panicle exertion must contain only alphabets and spaces')
+
     @validates('plant_height_pic')
     def validate_pic_one(self, value):
         if not value:
@@ -242,23 +358,38 @@ class PreHarvestMorphologyUpload(Schema):
         if file_size < 300 * 1024 or file_size > 1024 * 1024:
             raise ValidationError('Picture of plant height must be between 300KB and 1MB')
 
-    @validates('aroma_pic')
+    @validates('leaf_blade_width_pic')
     def validate_pic_two(self, value):
         if not value:
-            raise ValidationError('Picture of aroma is required')
+            raise ValidationError('Picture of leaf blade width is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture of aroma must be a file')
+            raise ValidationError('Picture of leaf blade width must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture of aroma must be a JPEG, JPG or PNG file')
+            raise ValidationError('Picture of leaf blade width must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of aroma must be between 300KB and 1MB')
+        if file_size < 300 * 1024 or file_size > 1024 * 1024:
+            raise ValidationError('Picture of leaf blade width must be between 300KB and 1MB')
+
+    @validates('leaf_blade_length_pic')
+    def validate_pic_three(self, value):
+        if not value:
+            raise ValidationError('Picture of leaf blade length is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of leaf blade length must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of leaf blade length must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+
+        if file_size < 300 * 1024 or file_size > 1024 * 1024:
+            raise ValidationError('Picture of leaf blade length must be between 300KB and 1MB')
 
     @validates('culm_internode_colour_pic')
-    def validate_pic_three(self, value):
+    def validate_pic_four(self, value):
         if not value:
             raise ValidationError('Picture of culm internode colour is required')
         if not isinstance(value, File):
@@ -272,7 +403,7 @@ class PreHarvestMorphologyUpload(Schema):
             raise ValidationError('Picture of culm internode colour must be between 300KB and 1MB')
 
     @validates('leaf_blade_colour_pic')
-    def validate_pic_four(self, value):
+    def validate_pic_five(self, value):
         if not value:
             raise ValidationError('Picture of leaf blade colour is required')
         if not isinstance(value, File):
@@ -285,22 +416,22 @@ class PreHarvestMorphologyUpload(Schema):
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture of leaf blade colour must be between 300KB and 1MB')
 
-    @validates('leaf_blade_pubescence_pic')
-    def validate_pic_five(self, value):
+    @validates('ligule_colour_pic')
+    def validate_pic_six(self, value):
         if not value:
-            raise ValidationError('Picture of leaf blade pubescence is required')
+            raise ValidationError('Picture of ligule colour is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture of leaf blade pubescence must be a file')
+            raise ValidationError('Picture of ligule colour must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture of leaf blade pubescence must be a JPEG, JPG or PNG file')
+            raise ValidationError('Picture of ligule colour must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
         if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of leaf blade pubescence must be between 300KB and 1MB')
+            raise ValidationError('Picture of ligule colour must be between 300KB and 1MB')
 
     @validates('flag_leaf_angle_pic')
-    def validate_pic_six(self, value):
+    def validate_pic_seven(self, value):
         if not value:
             raise ValidationError('Picture of flag leaf angle is required')
         if not isinstance(value, File):
@@ -313,36 +444,8 @@ class PreHarvestMorphologyUpload(Schema):
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture of flag leaf angle must be between 300KB and 1MB')
 
-    @validates('flag_leaf_length_pic')
-    def validate_pic_seven(self, value):
-        if not value:
-            raise ValidationError('Picture of flag leaf length is required')
-        if not isinstance(value, File):
-            raise ValidationError('Picture of flag leaf length must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture of flag leaf length must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of flag leaf length must be between 300KB and 1MB')
-
-    @validates('flag_leaf_width_pic')
-    def validate_pic_eight(self, value):
-        if not value:
-            raise ValidationError('Picture of flag leaf width is required')
-        if not isinstance(value, File):
-            raise ValidationError('Picture of flag leaf width must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture of flag leaf width must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of flag leaf width must be between 300KB and 1MB')
-
     @validates('ligule_shape_pic')
-    def validate_pic_nine(self, value):
+    def validate_pic_eight(self, value):
         if not value:
             raise ValidationError('Picture of ligule shape is required')
         if not isinstance(value, File):
@@ -355,19 +458,89 @@ class PreHarvestMorphologyUpload(Schema):
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture of ligule shape must be between 300KB and 1MB')
 
-    @validates('ligule_colour_pic')
-    def validate_pic_ten(self, value):
+    @validates('ligule_length_pic')
+    def validate_pic_nine(self, value):
         if not value:
-            raise ValidationError('Picture of ligule colour is required')
+            raise ValidationError('Picture of ligule length is required')
         if not isinstance(value, File):
-            raise ValidationError('Picture of ligule colour must be a file')
+            raise ValidationError('Picture of ligule length must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture of ligule colour must be a JPEG, JPG or PNG file')
+            raise ValidationError('Picture of ligule length must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
         if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of ligule colour must be between 300KB and 1MB')
+            raise ValidationError('Picture of ligule length must be between 300KB and 1MB')
+
+    @validates('collar_colour_pic')
+    def validate_pic_ten(self, value):
+        if not value:
+            raise ValidationError('Picture of collar colour is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of collar colour must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of collar colour must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of collar colour must be between 300KB and 1MB')
+
+    @validates('panicle_length_pic')
+    def validate_pic_eleven(self, value):
+        if not value:
+            raise ValidationError('Picture of panicle length is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of panicle length must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of panicle length must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle length must be between 300KB and 1MB')
+
+    @validates('panicle_axis_pic')
+    def validate_pic_twelve(self, value):
+        if not value:
+            raise ValidationError('Picture of panicle axis is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of panicle axis must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of panicle axis must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle axis must be between 300KB and 1MB')
+
+    @validates('panicle_type_pic')
+    def validate_pic_thirteen(self, value):
+        if not value:
+            raise ValidationError('Picture of panicle type is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of panicle type must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of panicle type must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle type must be between 300KB and 1MB')
+
+    @validates('panicle_exertion_pic')
+    def validate_pic_fourteen(self, value):
+        if not value:
+            raise ValidationError('Picture of panicle exertion is required')
+        if not isinstance(value, File):
+            raise ValidationError('Picture of panicle exertion must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Picture of panicle exertion must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of panicle exertion must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -386,32 +559,36 @@ class PreHarvestMorphologyUpload(Schema):
 
 class PostHarvestMorphologyUpload(Schema):
     g_v_id = fields.Str(required=True)
-    panicle_length = fields.Str(required=True)
+    panicle_density_pic = fields.Str(required=True)
     panicle_threshability = fields.Str(required=True)
-    panicle_type = fields.Str(required=True)
+    awning_pic = fields.Str(required=True)
     awning_length = fields.Str(required=True)
     awning_colour = fields.Str(required=True)
     grain_weight = fields.Str(required=True)
     lemma_palea_colour = fields.Str(required=True)
-    lemma_palea_hair = fields.Str(required=True)
+    lemma_palea_pubescence_pic = fields.Str(required=True)
     grain_length = fields.Str(required=True)
     grain_width = fields.Str(required=True)
     kernel_colour = fields.Str(required=True)
     kernel_length = fields.Str(required=True)
     kernel_width = fields.Str(required=True)
-    panicle_length_pic = fields.Raw(required=True)
+    scent = fields.Str(required=True)
+
+    panicle_density_pic = fields.Raw(required=True)
     panicle_threshability_pic = fields.Raw(required=True)
-    panicle_type_pic = fields.Raw(required=True)
+    awning_pic = fields.Raw(required=True)
     awning_length_pic = fields.Raw(required=True)
     awning_colour_pic = fields.Raw(required=True)
     grain_weight_pic = fields.Raw(required=True)
     lemma_palea_colour_pic = fields.Raw(required=True)
-    lemma_palea_hair_pic = fields.Raw(required=True)
+    lemma_palea_pubescence_pic = fields.Raw(required=True)
     grain_length_pic = fields.Raw(required=True)
     grain_width_pic = fields.Raw(required=True)
     kernel_colour_pic = fields.Raw(required=True)
     kernel_length_pic = fields.Raw(required=True)
     kernel_width_pic = fields.Raw(required=True)
+    scent_pic = fields.Raw(required=True)
+
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
     type_id = fields.Str(required=True)
@@ -544,7 +721,7 @@ class PostHarvestMorphologyUpload(Schema):
         if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
             raise ValidationError('Kernel width must contain only numeric characters and up to 2 decimal places')
 
-    @validates('panicle_length_pic')
+    @validates('panicle_density_pic')
     def validate_pic_one(self, value):
         if not value:
             raise ValidationError('Panicle length picture is required')
@@ -572,7 +749,7 @@ class PostHarvestMorphologyUpload(Schema):
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture panicle threshability must be between 300KB and 1MB')
 
-    @validates('panicle_type_pic')
+    @validates('awning_pic')
     def validate_pic_three(self, value):
         if not value:
             raise ValidationError('Panicle type picture is required')
@@ -642,7 +819,7 @@ class PostHarvestMorphologyUpload(Schema):
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture of lemma palea colour must be between 300KB and 1MB')
 
-    @validates('lemma_palea_hair_pic')
+    @validates('lemma_palea_pubescence_pic')
     def validate_pic_eight(self, value):
         if not value:
             raise ValidationError('Lemma palea hair picture is required')
@@ -725,6 +902,20 @@ class PostHarvestMorphologyUpload(Schema):
         value.seek(0)  # Seek back to the beginning of the file
         if not (300 * 1024 <= file_size <= 1024 * 1024):
             raise ValidationError('Picture of kernel width must be between 300KB and 1MB')
+
+    @validates('scent_pic')
+    def validate_pic_fourteen(self, value):
+        if not value:
+            raise ValidationError('Scent picture is required')
+        if not isinstance(value, File):
+            raise ValidationError('Scent picture must be a file')
+        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+            raise ValidationError('Scent picture must be a JPEG, JPG or PNG file')
+        value.seek(0, 2)  # Seek to the end of the file
+        file_size = value.tell()  # Get the current position (i.e., the file size)
+        value.seek(0)  # Seek back to the beginning of the file
+        if not (300 * 1024 <= file_size <= 1024 * 1024):
+            raise ValidationError('Picture of scent must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -850,18 +1041,17 @@ class CulinaryUpload(Schema):
 
     @validates('pic_two')
     def validate_pic_two(self, value):
-        if not value:
-            raise ValidationError('Picture two is required')
-        if not isinstance(value, File):
-            raise ValidationError('Picture two must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture two must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
+        if value:
+            if not isinstance(value, File):
+                raise ValidationError('Picture two must be a file')
+            if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+                raise ValidationError('Picture two must be a JPEG, JPG or PNG file')
+            value.seek(0, 2)  # Seek to the end of the file
+            file_size = value.tell()  # Get the current position (i.e., the file size)
+            value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture two must be between 300KB and 1MB')
+            if not (300 * 1024 <= file_size <= 1024 * 1024):
+                raise ValidationError('Picture two must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
