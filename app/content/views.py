@@ -902,7 +902,7 @@ class AgronomyUpload(MethodView):
 
                         # Insert the data into the database
 
-                        validated_data["seedbed_preparation_pic"] = file_url1
+                        validated_data["day_of_seed_sowing_pic"] = file_url1
                         validated_data["field_preparation_weeding_pic"] = file_url2
                         validated_data["transplantation_pic"] = file_url3
                         validated_data["tillering_starts_pic"] = file_url4
@@ -911,6 +911,7 @@ class AgronomyUpload(MethodView):
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         validated_data["type_id"] = type_id
                         db1.insert_one(validated_data)
+
                         # Extract the _id value
                         validated_data["_id"] = str(validated_data["_id"])
                         response = {"message": "Agronomy uploaded successfully", "status": "success",
@@ -934,7 +935,6 @@ class AgronomyUpload(MethodView):
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
             return make_response(jsonify(response)), 400
-
 
 class content_approval_update(MethodView):
     @cross_origin(supports_credentials=True)

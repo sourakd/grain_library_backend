@@ -559,14 +559,14 @@ class PreHarvestMorphologyUpload(Schema):
 
 class PostHarvestMorphologyUpload(Schema):
     g_v_id = fields.Str(required=True)
-    panicle_density_pic = fields.Str(required=True)
+    panicle_density = fields.Str(required=True)
     panicle_threshability = fields.Str(required=True)
-    awning_pic = fields.Str(required=True)
+    awning = fields.Str(required=True)
     awning_length = fields.Str(required=True)
     awning_colour = fields.Str(required=True)
     grain_weight = fields.Str(required=True)
     lemma_palea_colour = fields.Str(required=True)
-    lemma_palea_pubescence_pic = fields.Str(required=True)
+    lemma_palea_pubescence = fields.Str(required=True)
     grain_length = fields.Str(required=True)
     grain_width = fields.Str(required=True)
     kernel_colour = fields.Str(required=True)
@@ -604,8 +604,8 @@ class PostHarvestMorphologyUpload(Schema):
         if not find_grain_variant:
             raise ValidationError('Grain variant not found')
 
-    @validates('panicle_length')
-    def validate_panicle_length(self, value):
+    @validates('panicle_density')
+    def validate_panicle_density(self, value):
         if not value:
             raise ValidationError('Panicle length is required')
         if not isinstance(value, str):
@@ -622,8 +622,8 @@ class PostHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Panicle threshability must contain only alphabets and spaces')
 
-    @validates('panicle_type')
-    def validate_panicle_type(self, value):
+    @validates('awning')
+    def validate_awning(self, value):
         if not value:
             raise ValidationError('Panicle type is required')
         if not isinstance(value, str):
@@ -636,9 +636,23 @@ class PostHarvestMorphologyUpload(Schema):
         if not value:
             raise ValidationError('Awning length is required')
         if not isinstance(value, str):
-            raise ValidationError('Awning length must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Awning length must contain only numeric characters and up to 2 decimal places')
+            raise ValidationError('Awning  length must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Awning length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Awning length')
 
     @validates('awning_colour')
     def validate_awning_colour(self, value):
@@ -667,8 +681,8 @@ class PostHarvestMorphologyUpload(Schema):
         if not re.match(r'^[a-zA-Z\s]+$', value):
             raise ValidationError('Lemma palea colour must contain only alphabets and spaces')
 
-    @validates('lemma_palea_hair')
-    def validate_lemma_palea_hair(self, value):
+    @validates('lemma_palea_pubescence')
+    def validate_lemma_palea_pubescence(self, value):
         if not value:
             raise ValidationError('Lemma palea hair is required')
         if not isinstance(value, str):
@@ -681,18 +695,46 @@ class PostHarvestMorphologyUpload(Schema):
         if not value:
             raise ValidationError('Grain length is required')
         if not isinstance(value, str):
-            raise ValidationError('Grain length must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Grain length must contain only numeric characters and up to 2 decimal places')
+            raise ValidationError('Grain  length must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Grain length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Grain length')
 
     @validates('grain_width')
     def validate_grain_width(self, value):
         if not value:
             raise ValidationError('Grain width is required')
         if not isinstance(value, str):
-            raise ValidationError('Grain width must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Grain width must contain only numeric characters and up to 2 decimal places')
+            raise ValidationError('Grain  width must be a string')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Grain width must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Grain width')
 
     @validates('kernel_colour')
     def validate_kernel_colour(self, value):
@@ -709,8 +751,22 @@ class PostHarvestMorphologyUpload(Schema):
             raise ValidationError('Kernel length is required')
         if not isinstance(value, str):
             raise ValidationError('Kernel length must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Kernel length must contain only numeric characters and up to 2 decimal places')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Kernel length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Kernel length')
 
     @validates('kernel_width')
     def validate_kernel_width(self, value):
@@ -718,8 +774,22 @@ class PostHarvestMorphologyUpload(Schema):
             raise ValidationError('Kernel width is required')
         if not isinstance(value, str):
             raise ValidationError('Kernel width must be a string')
-        if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Kernel width must contain only numeric characters and up to 2 decimal places')
+
+        # Check format: number1.number2 with exactly two decimal places for both
+        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+            raise ValidationError(
+                'Kernel width must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+
+        try:
+            # Split the string into two numbers
+            num1, num2 = map(float, value.split('-'))
+
+            # Verify number2 is greater than number1
+            if num2 <= num1:
+                raise ValidationError('Second number must be greater than first number')
+
+        except ValueError:
+            raise ValidationError('Invalid number format in Kernel width')
 
     @validates('panicle_density_pic')
     def validate_pic_one(self, value):
@@ -822,16 +892,16 @@ class PostHarvestMorphologyUpload(Schema):
     @validates('lemma_palea_pubescence_pic')
     def validate_pic_eight(self, value):
         if not value:
-            raise ValidationError('Lemma palea hair picture is required')
+            raise ValidationError('Lemma palea pubescence picture is required')
         if not isinstance(value, File):
-            raise ValidationError('Lemma palea hair picture must be a file')
+            raise ValidationError('Lemma palea pubescence picture must be a file')
         if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
             raise ValidationError('Lemma palea hair picture must be a JPEG, JPG or PNG file')
         value.seek(0, 2)  # Seek to the end of the file
         file_size = value.tell()  # Get the current position (i.e., the file size)
         value.seek(0)  # Seek back to the beginning of the file
         if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of lemma palea hair must be between 300KB and 1MB')
+            raise ValidationError('Picture of lemma palea pubescence must be between 300KB and 1MB')
 
     @validates('grain_length_pic')
     def validate_pic_nine(self, value):
@@ -1099,7 +1169,7 @@ class AgronomyUpload(Schema):
             raise ValidationError('Grain variant not found')
 
     @validates('day_of_seed_sowing')
-    def day_of_seed_sowing(self, value):
+    def validate_day_of_seed_sowing(self, value):
         if not value:
             raise ValidationError('Day of seed sowing is required')
 
