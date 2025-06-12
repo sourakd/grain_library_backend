@@ -476,8 +476,8 @@ class PostHarvestMorphologyUpload(MethodView):
                             return make_response(jsonify(response)), 400
                         # Insert the data into the database
                         validated_data["panicle_density_pic"] = file_url1
-                        validated_data["awning_pic"] = file_url2
-                        validated_data["panicle_type_pic"] = file_url3
+                        validated_data["panicle_threshability_pic"] = file_url2
+                        validated_data["awning_pic"] = file_url3
                         validated_data["awning_length_pic"] = file_url4
                         validated_data["awning_colour_pic"] = file_url5
                         validated_data["grain_weight_pic"] = file_url6
@@ -936,6 +936,7 @@ class AgronomyUpload(MethodView):
             stop_and_check_mongo_status(conn)
             return make_response(jsonify(response)), 400
 
+
 class content_approval_update(MethodView):
     @cross_origin(supports_credentials=True)
     def post(self):
@@ -965,7 +966,7 @@ class content_approval_update(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 404
 
-                    g_v_id = find_content["g_v_id"]
+                    g_v_id = find_content.get("g_v_id", "Grain variant ID not found")
 
                     grain_variant = db2.find_one({"_id": ObjectId(g_v_id), "status": "active"})
 
@@ -976,8 +977,7 @@ class content_approval_update(MethodView):
 
                     else:
 
-                        approve_status = grain_variant["approve_status"]
-                        print(approve_status)
+                        approve_status = grain_variant.get("approve_status", "Approve status not found")
 
                         db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
                             "$set": {"status": status, "remarks": remarks,
