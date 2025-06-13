@@ -15,8 +15,9 @@ class FetchGrain(MethodView):
             db = database_connect_mongo()
             if db is not None:
                 db1 = db["grain_assign"]
-                find_grain = db1.find({"status": "active", "type_id": "grain_variant_assign"},
-                                      {"grain": 1, "status": 1, "grain_pic": 1})
+                find_grain = db1.find(
+                    {"status": "active", "type_id": "grain_variant_assign", "approve_status": {"$nin": ["pending"]}},
+                    {"grain": 1, "status": 1, "grain_pic": 1})
                 find_grain_list = list(find_grain)
 
                 if find_grain_list:
