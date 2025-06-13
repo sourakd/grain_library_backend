@@ -1064,9 +1064,9 @@ class EcoRegionUpload(Schema):
             raise ValidationError('Eco region details is required')
         # if not re.match(r'^\s*(\w+\s+){20,30}$', value):
         #     raise ValidationError('Eco region details must be between 20 and 30 words')
-        word_count = len(re.findall(r'\b\w+\b', value))
-        if word_count < 20 or word_count > 30:
-            raise ValidationError('Eco region details must be between 20 and 30 words')
+        # word_count = len(re.findall(r'\b\w+\b', value))
+        # if word_count < 20 or word_count > 30:
+        #     raise ValidationError('Eco region details must be between 20 and 30 words')
 
 
 class CulinaryUpload(Schema):
