@@ -63,7 +63,7 @@ class StoryUpload(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         s3_config = S3Config()
@@ -227,7 +227,7 @@ class PreHarvestMorphologyUpload(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         s3_config = S3Config()
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
@@ -572,7 +572,7 @@ class EcoRegionUpload(MethodView):
                         stop_and_check_mongo_status(conn)
                         return make_response(jsonify(response)), 400
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         s3_config = S3Config()
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
@@ -672,7 +672,7 @@ class CulinaryUpload(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         s3_config = S3Config()
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
@@ -744,7 +744,7 @@ class CulinaryUpload(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         s3_config = S3Config()
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
@@ -872,7 +872,7 @@ class AgronomyUpload(MethodView):
 
                     else:
 
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         s3_config = S3Config()
                         bucket_status, total_files, all_folders = s3_config.connect_to_s3()
@@ -981,20 +981,20 @@ class content_approval_update(MethodView):
 
                         db1.update_one({"_id": ObjectId(content_id), "type_id": type_id}, {
                             "$set": {"status": status, "remarks": remarks,
-                                     "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+                                     "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}})
 
                         if approve_status == "pending":
                             db2.update_one(
                                 {"_id": ObjectId(g_v_id), "status": "active"},
                                 {"$set": {"approve_status": [type_id],
-                                          "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+                                          "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}}
                             )
 
                         else:
                             db2.update_one(
                                 {"_id": ObjectId(g_v_id), "status": "active"},
                                 {"$addToSet": {"approve_status": type_id},
-                                 "$set": {"updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+                                 "$set": {"updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}}
                             )
 
                         response = {"status": "success", "message": "Content updated successfully"}

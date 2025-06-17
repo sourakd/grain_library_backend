@@ -58,7 +58,7 @@ class SuperEmployeeRegistration(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Update the updated_at field
+                        # Update the created_at  field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
                         validated_data["loc_assign"] = "false"
                         validated_data["type_id"] = "super_admin"
@@ -140,7 +140,7 @@ class AddSuperLocation(MethodView):
                         # Hash the password
                         validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
 
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         # Add type
@@ -225,11 +225,11 @@ class SuperLogin(MethodView):
                             return make_response(jsonify(response)), 400
 
                         # Delete the previous token if exists(only single token)
-                        db2.delete_many({"e_id": str(location["_id"])})
+                        db2.delete_many({"s_id": str(location["_id"])})
 
                         s_token = jwt.encode(
                             {'_id': str(location["_id"]),
-                             'exp': datetime.now(pytz.utc) + dt.timedelta(days=7)},
+                             'exp': datetime.now(pytz.utc) + dt.timedelta(days=1)},
                             current_app.config['SECRET_KEY'], algorithm="HS256")
 
                         del location["password"]
@@ -242,8 +242,10 @@ class SuperLogin(MethodView):
 
                         # Save the token into the database
                         db2.insert_one({"s_token": s_token, "s_id": str(location["_id"]),
-                                        "created_at": datetime.now(pytz.utc),
-                                        "local_time": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "created_at": str(datetime.now(pytz.utc)),
+                                        # "created_at_dt": str(dt.datetime.utcnow()),
+                                        "timezone": str(datetime.now(pytz.utc).astimezone().tzinfo),
+                                        "local_time": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
                                         "expired_at": datetime.now(pytz.utc) + dt.timedelta(days=1)})
 
                         response = {"status": 'success', "data": location, "message": "Login successful"}

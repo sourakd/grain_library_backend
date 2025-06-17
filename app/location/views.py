@@ -50,7 +50,7 @@ class AddCountry(MethodView):
                         # Hash the password
                         validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
 
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         # Add type
@@ -134,7 +134,7 @@ class AddRegion(MethodView):
                             # Hash the password
                             validated_data["password"] = pbkdf2_sha256.hash(validated_data["password"])
 
-                            # Update the updated_at field
+                            # Update the created_at field
                             validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                             # Add type

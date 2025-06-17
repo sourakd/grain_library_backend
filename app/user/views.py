@@ -119,7 +119,7 @@ class FetchCountryBasedOnGrain(MethodView):
             traceback.print_exc()
             response = {"status": 'val_error', "message": f'{str(e)}'}
             stop_and_check_mongo_status(conn)
-            return make_response(jsonify(response)), 200
+            return make_response(jsonify(response)), 500
 
         finally:
             stop_and_check_mongo_status(conn)
@@ -141,7 +141,7 @@ class FetchGrainVariant(MethodView):
             db1 = db["grain_assign"]
             data = request.get_json()
 
-            required_fields = ["grain", "c_id", "r_id"]
+            required_fields = ["grain", "c_id", "r_id", "search"]
             missing_fields = [field for field in required_fields if field not in data]
 
             if missing_fields:
@@ -150,12 +150,40 @@ class FetchGrainVariant(MethodView):
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
 
-            grain, c_id, r_id = data["grain"], data["c_id"], data["r_id"]
+            grain, c_id, r_id, search = data["grain"], data["c_id"], data["r_id"], data["search"]
 
             if not grain or not c_id or not r_id:
                 response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
                 stop_and_check_mongo_status(conn)
                 return make_response(jsonify(response)), 400
+
+            elif search:
+                query = {"status": "active", "type_id": "grain_variant_assign", "grain": grain, "c_id": c_id,
+                         "r_id": r_id, "approve_status": {"$nin": ["pending"]},
+                         "grain_variant": {"$exists": True, "$regex": search, "$options": "i"}}
+                find_grain_variant = db1.find(query, {"grain_variant": 1, "status": 1, "approve_status": 1}).sort(
+                    "grain_variant", 1)
+
+                find_grain_variant_list = list(find_grain_variant)
+
+                if not find_grain_variant_list:
+                    response = {"status": 'val_error', "message": {"Details": ["Grain variant not found"]}}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+
+                total_grain_variant = len(find_grain_variant_list)
+
+                for item in find_grain_variant_list:
+                    item["_id"] = str(item["_id"])
+
+                response = {
+                    "status": "success",
+                    "data": find_grain_variant_list,
+                    "total_grain_variant": total_grain_variant,
+                    "message": "Grain variant fetched successfully"
+                }
+
+                return make_response(jsonify(response)), 200
 
             else:
                 query = {"status": "active", "type_id": "grain_variant_assign", "grain": grain, "c_id": c_id,

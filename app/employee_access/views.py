@@ -53,7 +53,7 @@ class EmployeeRegistration(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         s3_config = S3Config()
@@ -410,7 +410,7 @@ class EmployeeStatusChange(MethodView):
                         update_status = db1.update_one(
                             {"type_id": type_id, "_id": ObjectId(employee_id), "status": {"$ne": "delete"}},
                             {"$set": {"status": emp_status,
-                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+                                      "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}})
 
                         if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Employee {emp_status} successfully"}
@@ -500,15 +500,17 @@ class AdminAssign(MethodView):
                             update_status_employee = db1.update_one({"_id": ObjectId(employee_id)},
                                                                     {"$set": {"location": location_name,
                                                                               "loc_id": location_id,
-                                                                              "updated_at": dt.datetime.now().strftime(
-                                                                                  "%Y-%m-%d %H:%M:%S"),
+                                                                              "updated_at": str(
+                                                                                  dt.datetime.now().strftime(
+                                                                                      "%Y-%m-%d %H:%M:%S")),
                                                                               "loc_assign": "true"}})
 
                             update_status_location = db2.update_one({"_id": ObjectId(location_id)},
                                                                     {"$set": {"employee": employee_name,
                                                                               "emp_id": employee_id,
-                                                                              "updated_at": dt.datetime.now().strftime(
-                                                                                  "%Y-%m-%d %H:%M:%S"),
+                                                                              "updated_at": str(
+                                                                                  dt.datetime.now().strftime(
+                                                                                      "%Y-%m-%d %H:%M:%S")),
                                                                               "emp_assign": "true",
                                                                               "privacy_policy": "false"}})
 
@@ -605,15 +607,17 @@ class SubAdminAssign(MethodView):
                         else:
                             update_status_employee = db1.update_one({"_id": ObjectId(employee_id)},
                                                                     {"$set": {"location": location_name, "loc_id": r_id,
-                                                                              "updated_at": dt.datetime.now().strftime(
-                                                                                  "%Y-%m-%d %H:%M:%S"),
+                                                                              "updated_at": str(
+                                                                                  dt.datetime.now().strftime(
+                                                                                      "%Y-%m-%d %H:%M:%S")),
                                                                               "loc_assign": "true"}})
 
                             update_status_location = db2.update_one({"_id": ObjectId(r_id)},
                                                                     {"$set": {"employee": employee_name,
                                                                               "emp_id": employee_id,
-                                                                              "updated_at": dt.datetime.now().strftime(
-                                                                                  "%Y-%m-%d %H:%M:%S"),
+                                                                              "updated_at": str(
+                                                                                  dt.datetime.now().strftime(
+                                                                                      "%Y-%m-%d %H:%M:%S")),
                                                                               "emp_assign": "true"}})
 
                             if update_status_employee.acknowledged and update_status_employee.modified_count == 1 and \
@@ -697,13 +701,13 @@ class EditorAssign(MethodView):
 
                     else:
                         editor_update = db1.update_one({"_id": ObjectId(employee_id)}, {"$set": {
-                            "updated_at": dt.datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"),
+                            "updated_at": str(dt.datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S")),
                             "loc_id": r_id, "loc_assign": "true", "g_v_id": g_v_id}})
 
                         grain_variant_update = db3.update_one({"_id": ObjectId(g_v_id)}, {"$set": {
-                            "updated_at": dt.datetime.now().strftime(
-                                "%Y-%m-%d %H:%M:%S"),
+                            "updated_at": str(dt.datetime.now().strftime(
+                                "%Y-%m-%d %H:%M:%S")),
                             "editor_id": employee_id, "emp_assign": "true", "employee": editor["employee_name"]}})
 
                         if editor_update.acknowledged and editor_update.modified_count == 1 and \
@@ -762,8 +766,8 @@ class PrivacyPolicyUpdate(MethodView):
 
                         else:
                             privacy_policy_update = db1.update_one({"_id": ObjectId(location_id)}, {"$set": {
-                                "updated_at": dt.datetime.now().strftime(
-                                    "%Y-%m-%d %H:%M:%S"),
+                                "updated_at": str(dt.datetime.now().strftime(
+                                    "%Y-%m-%d %H:%M:%S")),
                                 "privacy_policy": "true"}})
 
                             if privacy_policy_update.acknowledged and privacy_policy_update.modified_count == 1:

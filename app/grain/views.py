@@ -45,7 +45,7 @@ class AddGrain(MethodView):
                     else:
                         type_id = "grain"
 
-                        # Update the updated_at field
+                        # Update the created_at  field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         s3_config = S3Config()
@@ -120,7 +120,7 @@ class AddGrainVariant(MethodView):
                         return make_response(jsonify(response)), 400
 
                     else:
-                        # Update the updated_at field
+                        # Update the created_at field
                         validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                         # Add type field
@@ -446,7 +446,7 @@ class GStatusChange(MethodView):
                         update_status = db1.update_one(
                             {"_id": ObjectId(gs_id), "type_id": type_id, "status": {"$ne": "delete"}},
                             {"$set": {"status": g_status,
-                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+                                      "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}})
 
                         if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Grain {g_status} successfully"}
@@ -510,7 +510,7 @@ class GAStatusChange(MethodView):
                         update_status = db1.update_one(
                             {"_id": ObjectId(gs_id), "type_id": type_id, "status": {"$ne": "delete"}},
                             {"$set": {"status": g_status,
-                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+                                      "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}})
 
                         if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Grain {g_status} successfully"}
@@ -577,8 +577,8 @@ class AssignGrain(MethodView):
                             db3.insert_one({"grain": grain_name, "country": location_name, "status": "active",
                                             "grain_pic": grain_pic,
                                             "type_id": "grain_assign", "g_id": g_id, "loc_id": loc_id,
-                                            "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                            "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
+                                            "created_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                                            "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))})
 
                             response = {"status": "success",
                                         "message": f"{grain_name} assigned to {location_name} successfully"}
@@ -980,8 +980,8 @@ class AssignGrainVariant(MethodView):
 
                     validates_fields = {"grain": grain_name, "grain_variant": grain_variant, "gv_pic": gv_pic,
                                         "status": "active",
-                                        "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                        "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+                                        "created_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                                        "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}
 
                     try:
                         validate_data = grain_variant_registration_schema.load(validates_fields)
@@ -1101,7 +1101,7 @@ class GrainVariantStatusChange(MethodView):
                         update_status = db1.update_one(
                             {"_id": ObjectId(g_a_id), "status": {"$ne": "delete"}},
                             {"$set": {"status": g_a_status,
-                                      "updated_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}})
+                                      "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}})
 
                         if update_status.acknowledged and update_status.modified_count == 1:
                             response = {"status": "success", "message": f"Grain variant {g_a_status} successfully"}
