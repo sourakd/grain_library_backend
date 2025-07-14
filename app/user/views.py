@@ -161,7 +161,8 @@ class FetchGrainVariant(MethodView):
                 query = {"status": "active", "type_id": "grain_variant_assign", "grain": grain, "c_id": c_id,
                          "r_id": r_id, "approve_status": {"$nin": ["pending"]},
                          "grain_variant": {"$exists": True, "$regex": search, "$options": "i"}}
-                find_grain_variant = db1.find(query, {"grain_variant": 1, "status": 1, "approve_status": 1}).sort(
+                find_grain_variant = db1.find(query,
+                                              {"grain_variant": 1, "status": 1, "approve_status": 1, "gv_pic": 1}).sort(
                     "grain_variant", 1)
 
                 find_grain_variant_list = list(find_grain_variant)
@@ -189,7 +190,8 @@ class FetchGrainVariant(MethodView):
                 query = {"status": "active", "type_id": "grain_variant_assign", "grain": grain, "c_id": c_id,
                          "r_id": r_id, "approve_status": {"$nin": ["pending"]}}
 
-                find_grain_variant = db1.find(query, {"grain_variant": 1, "status": 1, "approve_status": 1}).sort(
+                find_grain_variant = db1.find(query,
+                                              {"grain_variant": 1, "status": 1, "approve_status": 1, "gv_pic": 1}).sort(
                     "grain_variant", 1)
 
                 find_grain_variant_list = list(find_grain_variant)

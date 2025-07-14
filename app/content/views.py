@@ -359,152 +359,152 @@ class PostHarvestMorphologyUpload(MethodView):
                 kernel_width_pic = request.files.get("kernel_width_pic")
                 scent_pic = request.files.get("scent_pic")
 
-                if panicle_density and panicle_threshability and awning and awning_length and awning_colour and grain_weight and \
-                        lemma_palea_colour and lemma_palea_pubescence and grain_length and grain_width and kernel_colour and \
-                        kernel_length and kernel_width and scent and panicle_density_pic and panicle_threshability_pic and \
-                        awning_pic and awning_length_pic and awning_colour_pic and grain_weight_pic and \
-                        lemma_palea_colour_pic and lemma_palea_pubescence_pic and grain_length_pic and grain_width_pic and \
-                        kernel_colour_pic and kernel_length_pic and kernel_width_pic and scent_pic:
+                status = "pending"
+                type_id = "post_harvest_morphology"
 
-                    status = "pending"
-                    type_id = "post_harvest_morphology"
+                # Check if the story is approved
+                if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
+                    response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
 
-                    # Check if the story is approved
-                    if not db1.find_one({"type_id": "story", "g_v_id": g_v_id, "status": "approve"}):
-                        response = {"message": {"Details": ["First approve the story"]}, "status": "val_error"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
+                # Check if the post harvest morphology already exists
+                existing_post_harvest_morphology = db1.find_one(
+                    {"type_id": "post_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
+                if existing_post_harvest_morphology:
+                    response = {"message": {"Details": ["Post Harvest Morphology already exists"]},
+                                "status": "val_error"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+                data = {
+                    "g_v_id": g_v_id,
+                    "panicle_density": panicle_density,
+                    "panicle_threshability": panicle_threshability,
+                    "awning": awning,
+                    "awning_length": awning_length if awning != "Absent" else None,
+                    "awning_colour": awning_colour if awning != "Absent" else None,
+                    "grain_weight": grain_weight,
+                    "lemma_palea_colour": lemma_palea_colour,
+                    "lemma_palea_pubescence": lemma_palea_pubescence,
+                    "grain_length": grain_length,
+                    "grain_width": grain_width,
+                    "kernel_colour": kernel_colour,
+                    "kernel_length": kernel_length,
+                    "kernel_width": kernel_width,
+                    "scent": scent,
 
-                    # Check if the post harvest morphology already exists
-                    existing_post_harvest_morphology = db1.find_one(
-                        {"type_id": "post_harvest_morphology", "g_v_id": g_v_id, "status": {"$ne": "delete"}})
-                    if existing_post_harvest_morphology:
-                        response = {"message": {"Details": ["Post Harvest Morphology already exists"]},
-                                    "status": "val_error"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-                    data = {
-                        "g_v_id": g_v_id,
-                        "panicle_density": panicle_density,
-                        "panicle_threshability": panicle_threshability,
-                        "awning": awning,
-                        "awning_length": awning_length,
-                        "awning_colour": awning_colour,
-                        "grain_weight": grain_weight,
-                        "lemma_palea_colour": lemma_palea_colour,
-                        "lemma_palea_pubescence": lemma_palea_pubescence,
-                        "grain_length": grain_length,
-                        "grain_width": grain_width,
-                        "kernel_colour": kernel_colour,
-                        "kernel_length": kernel_length,
-                        "kernel_width": kernel_width,
-                        "scent": scent,
+                    "panicle_density_pic": panicle_density_pic,
+                    "panicle_threshability_pic": panicle_threshability_pic,
+                    "awning_pic": awning_pic,
+                    "awning_length_pic": awning_length_pic if awning != "Absent" else None,
+                    "awning_colour_pic": awning_colour_pic if awning != "Absent" else None,
+                    "grain_weight_pic": grain_weight_pic,
+                    "lemma_palea_colour_pic": lemma_palea_colour_pic,
+                    "lemma_palea_pubescence_pic": lemma_palea_pubescence_pic,
+                    "grain_length_pic": grain_length_pic,
+                    "grain_width_pic": grain_width_pic,
+                    "kernel_colour_pic": kernel_colour_pic,
+                    "kernel_length_pic": kernel_length_pic,
+                    "kernel_width_pic": kernel_width_pic,
+                    "scent_pic": scent_pic,
 
-                        "panicle_density_pic": panicle_density_pic,
-                        "panicle_threshability_pic": panicle_threshability_pic,
-                        "awning_pic": awning_pic,
-                        "awning_length_pic": awning_length_pic,
-                        "awning_colour_pic": awning_colour_pic,
-                        "grain_weight_pic": grain_weight_pic,
-                        "lemma_palea_colour_pic": lemma_palea_colour_pic,
-                        "lemma_palea_pubescence_pic": lemma_palea_pubescence_pic,
-                        "grain_length_pic": grain_length_pic,
-                        "grain_width_pic": grain_width_pic,
-                        "kernel_colour_pic": kernel_colour_pic,
-                        "kernel_length_pic": kernel_length_pic,
-                        "kernel_width_pic": kernel_width_pic,
-                        "scent_pic": scent_pic,
-
-                        "status": status,
-                        "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        "updated_at": None,
-                        "type_id": type_id
-                    }
+                    "status": status,
+                    "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "updated_at": None,
+                    "type_id": type_id
+                }
+                try:
+                    validated_data = PostHarvestMorphologyUploadSchema.load(data)
+                except ValidationError as err:
+                    response = {"message": err.messages, "status": "val_error"}
+                    stop_and_check_mongo_status(conn)
+                    return make_response(jsonify(response)), 400
+                else:
+                    # Update the updated_at field
+                    validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                    s3_config = S3Config()
+                    bucket_status, total_files, all_folders = s3_config.connect_to_s3()
+                    s3_uploader = S3Uploader(s3_config)
                     try:
-                        validated_data = PostHarvestMorphologyUploadSchema.load(data)
-                    except ValidationError as err:
-                        response = {"message": err.messages, "status": "val_error"}
-                        stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 400
-                    else:
-                        # Update the updated_at field
-                        validated_data["created_at"] = str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-                        s3_config = S3Config()
-                        bucket_status, total_files, all_folders = s3_config.connect_to_s3()
-                        s3_uploader = S3Uploader(s3_config)
-                        try:
-                            file_url1 = s3_uploader.upload_file(panicle_density_pic, type_id="post_harvest_morphology",
+                        file_url1 = s3_uploader.upload_file(panicle_density_pic, type_id="post_harvest_morphology",
+                                                            status="pending")
+                        file_url2 = s3_uploader.upload_file(panicle_threshability_pic,
+                                                            type_id="post_harvest_morphology", status="pending")
+                        file_url3 = s3_uploader.upload_file(awning_pic, type_id="post_harvest_morphology",
+                                                            status="pending")
+                        if awning != "Absent":
+                            file_url4 = s3_uploader.upload_file(awning_length_pic,
+                                                                type_id="post_harvest_morphology",
                                                                 status="pending")
-                            file_url2 = s3_uploader.upload_file(panicle_threshability_pic,
-                                                                type_id="post_harvest_morphology", status="pending")
-                            file_url3 = s3_uploader.upload_file(awning_pic, type_id="post_harvest_morphology",
+                            file_url5 = s3_uploader.upload_file(awning_colour_pic,
+                                                                type_id="post_harvest_morphology",
                                                                 status="pending")
-                            file_url4 = s3_uploader.upload_file(awning_length_pic, type_id="post_harvest_morphology",
-                                                                status="pending")
-                            file_url5 = s3_uploader.upload_file(awning_colour_pic, type_id="post_harvest_morphology",
-                                                                status="pending")
-                            file_url6 = s3_uploader.upload_file(grain_weight_pic, type_id="post_harvest_morphology",
-                                                                status="pending")
-                            file_url7 = s3_uploader.upload_file(lemma_palea_colour_pic,
-                                                                type_id="post_harvest_morphology", status="pending")
-                            file_url8 = s3_uploader.upload_file(lemma_palea_pubescence_pic,
-                                                                type_id="post_harvest_morphology", status="pending")
-                            file_url9 = s3_uploader.upload_file(grain_length_pic, type_id="post_harvest_morphology",
-                                                                status="pending")
-                            file_url10 = s3_uploader.upload_file(grain_width_pic, type_id="post_harvest_morphology",
-                                                                 status="pending")
-                            file_url11 = s3_uploader.upload_file(kernel_colour_pic, type_id="post_harvest_morphology",
-                                                                 status="pending")
-                            file_url12 = s3_uploader.upload_file(kernel_length_pic, type_id="post_harvest_morphology",
-                                                                 status="pending")
-                            file_url13 = s3_uploader.upload_file(kernel_width_pic, type_id="post_harvest_morphology",
-                                                                 status="pending")
-                            file_url14 = s3_uploader.upload_file(scent_pic, type_id="post_harvest_morphology",
-                                                                 status="pending")
+                        else:
+                            file_url4 = None
+                            file_url5 = None
 
+                        file_url6 = s3_uploader.upload_file(grain_weight_pic, type_id="post_harvest_morphology",
+                                                            status="pending")
+                        file_url7 = s3_uploader.upload_file(lemma_palea_colour_pic,
+                                                            type_id="post_harvest_morphology", status="pending")
+                        file_url8 = s3_uploader.upload_file(lemma_palea_pubescence_pic,
+                                                            type_id="post_harvest_morphology", status="pending")
+                        file_url9 = s3_uploader.upload_file(grain_length_pic, type_id="post_harvest_morphology",
+                                                            status="pending")
+                        file_url10 = s3_uploader.upload_file(grain_width_pic, type_id="post_harvest_morphology",
+                                                             status="pending")
+                        file_url11 = s3_uploader.upload_file(kernel_colour_pic, type_id="post_harvest_morphology",
+                                                             status="pending")
+                        file_url12 = s3_uploader.upload_file(kernel_length_pic, type_id="post_harvest_morphology",
+                                                             status="pending")
+                        file_url13 = s3_uploader.upload_file(kernel_width_pic, type_id="post_harvest_morphology",
+                                                             status="pending")
+                        file_url14 = s3_uploader.upload_file(scent_pic, type_id="post_harvest_morphology",
+                                                             status="pending")
+
+                        if awning != "Absent":
                             file_url = [file_url1, file_url2, file_url3, file_url4, file_url5, file_url6, file_url7,
                                         file_url8, file_url9, file_url10, file_url11, file_url12, file_url13,
                                         file_url14]
-                        except Exception as e:
-                            response = {"message": str(e), "status": "val_error"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
+                        else:
+                            file_url = [file_url1, file_url2, file_url3, file_url6, file_url7, file_url8, file_url9,
+                                        file_url10, file_url11, file_url12, file_url13, file_url14]
 
-                        if s3_uploader.check_existing_file_story(file_url, type_id):
-                            response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
-                            stop_and_check_mongo_status(conn)
-                            return make_response(jsonify(response)), 400
-                        # Insert the data into the database
-                        validated_data["panicle_density_pic"] = file_url1
-                        validated_data["panicle_threshability_pic"] = file_url2
-                        validated_data["awning_pic"] = file_url3
-                        validated_data["awning_length_pic"] = file_url4
-                        validated_data["awning_colour_pic"] = file_url5
-                        validated_data["grain_weight_pic"] = file_url6
-                        validated_data["lemma_palea_colour_pic"] = file_url7
-                        validated_data["lemma_palea_pubescence_pic"] = file_url8
-                        validated_data["grain_length_pic"] = file_url9
-                        validated_data["grain_width_pic"] = file_url10
-                        validated_data["kernel_colour_pic"] = file_url11
-                        validated_data["kernel_length_pic"] = file_url12
-                        validated_data["kernel_width_pic"] = file_url13
-                        validated_data["scent_pic"] = file_url14
-                        validated_data["type_id"] = type_id
-                        db1.insert_one(validated_data)
-                        # Extract the _id value
-                        validated_data["_id"] = str(validated_data["_id"])
-                        # validated_data["s3_total_files"] = total_files
-                        # validated_data["s3_all_folders"] = all_folders
-
-                        response = {"message": "Post Harvest Morphology uploaded successfully", "status": "success",
-                                    "data": validated_data}
+                    except Exception as e:
+                        response = {"message": str(e), "status": "val_error"}
                         stop_and_check_mongo_status(conn)
-                        return make_response(jsonify(response)), 200
+                        return make_response(jsonify(response)), 400
 
-                else:
-                    response = {"status": 'val_error', "message": {"Details": ["Please enter all details"]}}
+                    if s3_uploader.check_existing_file_story(file_url, type_id):
+                        response = {"message": {"File": ["File already exist"]}, "status": "val_error"}
+                        stop_and_check_mongo_status(conn)
+                        return make_response(jsonify(response)), 400
+                    # Insert the data into the database
+                    validated_data["panicle_density_pic"] = file_url1
+                    validated_data["panicle_threshability_pic"] = file_url2
+                    validated_data["awning_pic"] = file_url3
+                    validated_data["awning_length_pic"] = file_url4 if awning != "Absent" else None
+                    validated_data["awning_colour_pic"] = file_url5 if awning != "Absent" else None
+                    validated_data["grain_weight_pic"] = file_url6
+                    validated_data["lemma_palea_colour_pic"] = file_url7
+                    validated_data["lemma_palea_pubescence_pic"] = file_url8
+                    validated_data["grain_length_pic"] = file_url9
+                    validated_data["grain_width_pic"] = file_url10
+                    validated_data["kernel_colour_pic"] = file_url11
+                    validated_data["kernel_length_pic"] = file_url12
+                    validated_data["kernel_width_pic"] = file_url13
+                    validated_data["scent_pic"] = file_url14
+                    validated_data["type_id"] = type_id
+                    db1.insert_one(validated_data)
+                    # Extract the _id value
+                    validated_data["_id"] = str(validated_data["_id"])
+                    # validated_data["s3_total_files"] = total_files
+                    # validated_data["s3_all_folders"] = all_folders
+
+                    response = {"message": "Post Harvest Morphology uploaded successfully", "status": "success",
+                                "data": validated_data}
                     stop_and_check_mongo_status(conn)
-                    return make_response(jsonify(response)), 400
+                    return make_response(jsonify(response)), 200
 
             else:
                 response = {"status": 'val_error', "message": {"Details": ["Database connection failed"]}}

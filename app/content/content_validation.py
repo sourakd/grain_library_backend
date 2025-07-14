@@ -562,8 +562,8 @@ class PostHarvestMorphologyUpload(Schema):
     panicle_density = fields.Str(required=True)
     panicle_threshability = fields.Str(required=True)
     awning = fields.Str(required=True)
-    awning_length = fields.Str(required=True)
-    awning_colour = fields.Str(required=True)
+    awning_length = fields.Str(allow_none=True)
+    awning_colour = fields.Str(allow_none=True)
     grain_weight = fields.Str(required=True)
     lemma_palea_colour = fields.Str(required=True)
     lemma_palea_pubescence = fields.Str(required=True)
@@ -577,8 +577,8 @@ class PostHarvestMorphologyUpload(Schema):
     panicle_density_pic = fields.Raw(required=True)
     panicle_threshability_pic = fields.Raw(required=True)
     awning_pic = fields.Raw(required=True)
-    awning_length_pic = fields.Raw(required=True)
-    awning_colour_pic = fields.Raw(required=True)
+    awning_length_pic = fields.Raw(allow_none=True)
+    awning_colour_pic = fields.Raw(allow_none=True)
     grain_weight_pic = fields.Raw(required=True)
     lemma_palea_colour_pic = fields.Raw(required=True)
     lemma_palea_pubescence_pic = fields.Raw(required=True)
@@ -607,11 +607,11 @@ class PostHarvestMorphologyUpload(Schema):
     @validates('panicle_density')
     def validate_panicle_density(self, value):
         if not value:
-            raise ValidationError('Panicle length is required')
+            raise ValidationError('Panicle density is required')
         if not isinstance(value, str):
-            raise ValidationError('Panicle length must be a string')
+            raise ValidationError('Panicle density must be a string')
         if not re.match(r'^\d+(?:\.\d{1,2})?$', value):
-            raise ValidationError('Panicle length must contain only numeric characters and up to 2 decimal places')
+            raise ValidationError('Panicle density must contain only numeric characters and up to 2 decimal places')
 
     @validates('panicle_threshability')
     def validate_panicle_threshability(self, value):
@@ -619,8 +619,9 @@ class PostHarvestMorphologyUpload(Schema):
             raise ValidationError('Panicle threshability is required')
         if not isinstance(value, str):
             raise ValidationError('Panicle threshability must be a string')
-        if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Panicle threshability must contain only alphabets and spaces')
+        if not re.match(r'^[a-zA-Z\s%<>=0-9-]+$', value):
+            raise ValidationError(
+                'Panicle threshability contain only alphabets, spaces, numbers, and special characters: % < > = -')
 
     @validates('awning')
     def validate_awning(self, value):
@@ -633,35 +634,33 @@ class PostHarvestMorphologyUpload(Schema):
 
     @validates('awning_length')
     def validate_awning_length(self, value):
-        if not value:
-            raise ValidationError('Awning length is required')
-        if not isinstance(value, str):
-            raise ValidationError('Awning  length must be a string')
+        if value:
+            if not isinstance(value, str):
+                raise ValidationError('Awning  length must be a string')
 
-        # Check format: number1.number2 with exactly two decimal places for both
-        if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
-            raise ValidationError(
-                'Awning length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
+            # Check format: number1.number2 with exactly two decimal places for both
+            if not re.match(r'^\d+\.\d{2}-\d+\.\d{2}$', value):
+                raise ValidationError(
+                    'Awning length must be in format: number1.xx-number2.xx (where xx are two decimal places)')
 
-        try:
-            # Split the string into two numbers
-            num1, num2 = map(float, value.split('-'))
+            try:
+                # Split the string into two numbers
+                num1, num2 = map(float, value.split('-'))
 
-            # Verify number2 is greater than number1
-            if num2 <= num1:
-                raise ValidationError('Second number must be greater than first number')
+                # Verify number2 is greater than number1
+                if num2 <= num1:
+                    raise ValidationError('Second number must be greater than first number')
 
-        except ValueError:
-            raise ValidationError('Invalid number format in Awning length')
+            except ValueError:
+                raise ValidationError('Invalid number format in Awning length')
 
     @validates('awning_colour')
     def validate_awning_colour(self, value):
-        if not value:
-            raise ValidationError('Awning colour is required')
-        if not isinstance(value, str):
-            raise ValidationError('Awning colour must be a string')
-        if not re.match(r'^[a-zA-Z\s]+$', value):
-            raise ValidationError('Awning colour must contain only alphabets and spaces')
+        if value:
+            if not isinstance(value, str):
+                raise ValidationError('Awning colour must be a string')
+            if not re.match(r'^[a-zA-Z\s]+$', value):
+                raise ValidationError('Awning colour must contain only alphabets and spaces')
 
     @validates('grain_weight')
     def validate_grain_weight(self, value):
@@ -835,31 +834,29 @@ class PostHarvestMorphologyUpload(Schema):
 
     @validates('awning_length_pic')
     def validate_pic_four(self, value):
-        if not value:
-            raise ValidationError('Awning length picture is required')
-        if not isinstance(value, File):
-            raise ValidationError('Awning length picture must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Awning length picture must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of awning length must be between 300KB and 1MB')
+        if value:
+            if not isinstance(value, File):
+                raise ValidationError('Awning length picture must be a file')
+            if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+                raise ValidationError('Awning length picture must be a JPEG, JPG or PNG file')
+            value.seek(0, 2)  # Seek to the end of the file
+            file_size = value.tell()  # Get the current position (i.e., the file size)
+            value.seek(0)  # Seek back to the beginning of the file
+            if not (300 * 1024 <= file_size <= 1024 * 1024):
+                raise ValidationError('Picture of awning length must be between 300KB and 1MB')
 
     @validates('awning_colour_pic')
     def validate_pic_five(self, value):
-        if not value:
-            raise ValidationError('Awning colour picture is required')
-        if not isinstance(value, File):
-            raise ValidationError('Awning colour picture must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Awning colour picture must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture of awning colour must be between 300KB and 1MB')
+        if value:
+            if not isinstance(value, File):
+                raise ValidationError('Awning colour picture must be a file')
+            if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+                raise ValidationError('Awning colour picture must be a JPEG, JPG or PNG file')
+            value.seek(0, 2)  # Seek to the end of the file
+            file_size = value.tell()  # Get the current position (i.e., the file size)
+            value.seek(0)  # Seek back to the beginning of the file
+            if not (300 * 1024 <= file_size <= 1024 * 1024):
+                raise ValidationError('Picture of awning colour must be between 300KB and 1MB')
 
     @validates('grain_weight_pic')
     def validate_pic_six(self, value):
@@ -1222,8 +1219,8 @@ class AgronomyUpload(Schema):
             raise ValidationError('Observed at is required')
 
         word_count = len(re.findall(r'\b\w+\b', value))
-        if word_count < 30 or word_count > 50:
-            raise ValidationError('Observed at must be between 30 and 50 words')
+        if word_count < 15 or word_count > 20:
+            raise ValidationError('Observed at must be between 15 and 20 words')
 
     @validates('day_of_seed_sowing_pic')
     def validate_seedbed_preparation_pic(self, value):

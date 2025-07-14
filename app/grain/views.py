@@ -980,8 +980,8 @@ class AssignGrainVariant(MethodView):
 
                     validates_fields = {"grain": grain_name, "grain_variant": grain_variant, "gv_pic": gv_pic,
                                         "status": "active",
-                                        "created_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
-                                        "updated_at": str(dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}
+                                        "created_at": dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                        "updated_at": None}
 
                     try:
                         validate_data = grain_variant_registration_schema.load(validates_fields)
@@ -1031,6 +1031,8 @@ class AssignGrainVariant(MethodView):
                             validate_data["r_id"] = r_id
                             validate_data["g_a_id"] = g_a_id
                             validate_data["gv_pic"] = file_url
+                            validate_data["created_at"] = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            validate_data["updated_at"] = None
 
                             db3.insert_one(validate_data)
 
