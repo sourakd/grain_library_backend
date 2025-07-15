@@ -25,6 +25,7 @@ class StoryUpload(MethodView):
                 db1 = db["content"]
                 data = dict(request.form)
                 story = data.get("story", [])
+                sorces = data.get("sources", [])
                 g_v_id = data["g_v_id"]
                 conserved_by = data["conserved_by"]
                 pic_one = request.files.get("pic_one")
@@ -47,6 +48,7 @@ class StoryUpload(MethodView):
                         "story": story,
                         "g_v_id": g_v_id,
                         "conserved_by": conserved_by,
+                        "sources": sorces,
                         "pic_one": pic_one,
                         "pic_two": pic_two,
                         "pic_three": pic_three,

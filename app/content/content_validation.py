@@ -11,9 +11,10 @@ class StoryUpload(Schema):
     story = fields.Raw(required=True)
     g_v_id = fields.Str(required=True)
     conserved_by = fields.Str(required=True)
+    sources = fields.Str(allow_none=True)
     pic_one = fields.Raw(required=True)
     pic_two = fields.Raw(required=True)
-    pic_three = fields.Raw(required=True)
+    pic_three = fields.Raw(allow_none=True)
     status = fields.Str(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
@@ -72,18 +73,17 @@ class StoryUpload(Schema):
 
     @validates('pic_three')
     def validate_pic_three(self, value):
-        if not value:
-            raise ValidationError('Picture three is required')
-        if not isinstance(value, File):
-            raise ValidationError('Picture three must be a file')
-        if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
-            raise ValidationError('Picture three must be a JPEG, JPG or PNG file')
-        value.seek(0, 2)  # Seek to the end of the file
-        file_size = value.tell()  # Get the current position (i.e., the file size)
-        value.seek(0)  # Seek back to the beginning of the file
+        if value:
+            if not isinstance(value, File):
+                raise ValidationError('Picture three must be a file')
+            if value.content_type not in ['image/jpeg', 'image/png', 'image/jpg']:
+                raise ValidationError('Picture three must be a JPEG, JPG or PNG file')
+            value.seek(0, 2)  # Seek to the end of the file
+            file_size = value.tell()  # Get the current position (i.e., the file size)
+            value.seek(0)  # Seek back to the beginning of the file
 
-        if not (300 * 1024 <= file_size <= 1024 * 1024):
-            raise ValidationError('Picture three must be between 300KB and 1MB')
+            if not (300 * 1024 <= file_size <= 1024 * 1024):
+                raise ValidationError('Picture three must be between 300KB and 1MB')
 
     @validates('status')
     def validate_status(self, value):
@@ -1070,7 +1070,7 @@ class CulinaryUpload(Schema):
     g_v_id = fields.Str(required=True)
     culinary = fields.Raw(required=True)
     pic_one = fields.Raw(required=True)
-    pic_two = fields.Raw(required=False)
+    pic_two = fields.Raw(allow_none=True)
     status = fields.Str(required=True)
     created_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", required=True)
     updated_at = fields.DateTime(format="%Y-%m-%d %H:%M:%S", allow_none=True)
